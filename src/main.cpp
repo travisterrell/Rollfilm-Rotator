@@ -1,5 +1,9 @@
 #include <Arduino.h>
 
+#define LOG_BAUD 115200
+#define LOGF(...)   do { Serial.printf(__VA_ARGS__); } while(0)
+#define LOGFLN(...) do { Serial.printf(__VA_ARGS__); Serial.println(); } while(0)
+
 // ---------------- Pins ----------------
 constexpr int PIN_IN1 = 18; // DRV8871 IN1 (PWM-capable)
 constexpr int PIN_IN2 = 19; // DRV8871 IN2 (PWM-capable)
@@ -26,6 +30,8 @@ uint16_t rampDownMs = 200;
 uint16_t coastBetweenMs = 500;
 uint32_t forwardRunMs = 10000; // 10 s forward
 uint32_t reverseRunMs = 10000; // 10 s reverse
+
+void handleSerialCLI(); 
 
 // ---------------- Helpers ----------------
 inline uint16_t pctToDuty(float pct)
@@ -61,21 +67,19 @@ void brakeStop()
 }
 
 // Blocking ramps (short; fine for 200–300 ms)
-void rampForward(uint16_t targetDuty, uint16_t ms)
-{
-  uint16_t steps = max<uint16_t>(1, ms / 10);
-  for (uint16_t i = 0; i <= steps; ++i)
-  {
+void rampForward(uint16_t targetDuty, uint16_t ms) {
+  uint16_t steps = ms / 10;
+  if (steps == 0) steps = 1;
+  for (uint16_t i = 0; i <= steps; ++i) {
     uint16_t d = (uint32_t)targetDuty * i / steps;
     runForwardDuty(d);
     delay(10);
   }
 }
-void rampReverse(uint16_t targetDuty, uint16_t ms)
-{
-  uint16_t steps = max<uint16_t>(1, ms / 10);
-  for (uint16_t i = 0; i <= steps; ++i)
-  {
+void rampReverse(uint16_t targetDuty, uint16_t ms) {
+  uint16_t steps = ms / 10;
+  if (steps == 0) steps = 1;
+  for (uint16_t i = 0; i <= steps; ++i) {
     uint16_t d = (uint32_t)targetDuty * i / steps;
     runReverseDuty(d);
     delay(10);
@@ -164,6 +168,11 @@ void stopCycleCoast()
 
 void setup()
 {
+  // Debug logging
+  Serial.begin(LOG_BAUD);
+  while(!Serial && millis() < 2000) { /* wait a tick for monitor */ }
+  LOGFLN("Boot. PWM=%dkHz, bits=%d", PWM_HZ/1000, PWM_BITS);
+
   // PWM channels
   ledcSetup(CH_IN1, PWM_HZ, PWM_BITS);
   ledcSetup(CH_IN2, PWM_HZ, PWM_BITS);
@@ -185,24 +194,35 @@ void setup()
 
 void loop()
 {
-  // --- Button handling ---
+  // Logging
+  handleSerialCLI();
+
+  // -----------------------
+  // |   Button handling   |
+  // -----------------------
   if (checkPressed(btnStart))
   {
-    // Example: run for 30 minutes (1,800,000 ms). Change as you like, or call startCycleIndefinite().
-    startTimedCycle(1800000UL);
+    LOGFLN("BTN start"); 
+
+    startContinuousCycle();
+    // startTimedCycle(1800000UL); // Example: run for 30 minutes (1,800,000 ms).
   }
   if (checkPressed(btnStop))
   {
     stopCycleCoast();
   }
 
+  // -----------------------
   // --- Timed auto-stop ---
+  // -----------------------
   if (running && runEndMs && (int32_t)(millis() - runEndMs) >= 0)
   {
     stopCycleCoast();
   }
 
-  // --- Phase machine (non-blocking except short ramps triggered on transitions) ---
+  // -----------------------
+  // ---  Phase machine  --- (non-blocking except short ramps triggered on transitions)
+  // -----------------------
   if (!running)
     return;
 
@@ -241,5 +261,45 @@ void loop()
   case Phase::IDLE:
   default:
     break;
+  }
+}
+
+void handleSerialCLI() {
+  if (!Serial.available()) return;
+  const char cmd = Serial.read();
+
+  if (cmd == 'f') { // forward manual
+    uint16_t duty = pctToDuty(cruisePct);
+    LOGFLN("Manual forward %.1f%%", cruisePct);
+    rampForward(duty, rampUpMs);
+  } else if (cmd == 'r') { // reverse manual
+    uint16_t duty = pctToDuty(cruisePct);
+    LOGFLN("Manual reverse %.1f%%", cruisePct);
+    rampReverse(duty, rampUpMs);
+  } else if (cmd == 'c') { // coast stop
+    LOGFLN("Coast stop");
+    coastStop();
+  } else if (cmd == 'b') { // brake stop
+    LOGFLN("Brake stop");
+    brakeStop();
+  } else if (cmd == 'a') { // auto pattern (indefinite)
+    LOGFLN("Auto pattern start (indefinite)");
+    startContinuousCycle();
+  } else if (cmd == 't') { // timed run: next number = minutes
+    while (!Serial.available()) {/*wait*/}
+    int minutes = Serial.parseInt(); // e.g. send: t30<enter>
+    if (minutes <= 0) minutes = 1;
+    LOGFLN("Timed run %d min", minutes);
+    startTimedCycle((uint32_t)minutes * 60UL * 1000UL);
+  } else if (cmd == 'u') { // set duty percent
+    while (!Serial.available()) {/*wait*/}
+    float pct = Serial.parseFloat();   // e.g. send: u65.5<enter>
+    cruisePct = pct;
+    LOGFLN("Cruise set to %.1f%%", cruisePct);
+  } else if (cmd == 'p') {
+    LOGFLN("State: running=%d phase=%d duty=%.1f%%",
+           running, (int)phase, cruisePct);
+  } else {
+    LOGFLN("Commands: f=FWD, r=REV, c=COAST, b=BRAKE, a=AUTO, t[min], u[%%], p=print");
   }
 }
