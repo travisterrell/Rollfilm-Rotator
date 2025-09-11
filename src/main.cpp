@@ -3,7 +3,7 @@
 
 // --- Serial config (make headless easy) ---
 #define ENABLE_SERIAL       1
-#define WAIT_FOR_SERIAL_MS  2000
+#define WAIT_FOR_SERIAL_MS  1500
 
 #if ENABLE_SERIAL
   #define LOG_BAUD 115200
@@ -37,7 +37,7 @@ void setup() {
     /* button4  */ 14
   };
   cfg.pwmHz   = 20000;
-  cfg.pwmBits = 12;
+  cfg.pwmBits = 11; // 11 instead of 12 b/c esp32 can't handle 12 bits @ 20kHz
   cfg.chIn1   = 0;
   cfg.chIn2   = 1;
 
