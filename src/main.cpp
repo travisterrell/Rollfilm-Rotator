@@ -45,8 +45,8 @@ void setup() {
   cfg.t.rampUpMs       = 10;
   cfg.t.rampDownMs     = 10;
   cfg.t.coastBetweenMs = 50;
-  cfg.t.forwardRunMs   = 10000;
-  cfg.t.reverseRunMs   = 10000;
+  cfg.t.forwardRunMs   = 30000;
+  cfg.t.reverseRunMs   = 30000;
 
   // cfg.defaultRunDurationMs = seconds(120); // Commented out defaults to 0, which is continuous
 
