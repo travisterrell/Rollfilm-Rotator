@@ -26,36 +26,32 @@ void setup() {
   }
 #endif
 
-  // Pick ESP32-WROOM-32 friendly pins (leave room for two more buttons and an I2C display)
+  // ESP32-WROOM-32 friendly pins (leave room for two more buttons and an I2C display)
   ProcessorConfig cfg;
   cfg.pins = {
     /* motorPWM1   */ 18,
     /* motorPWM2   */ 19,
-    /* startButton */ 25,
+    /* toggleButton */ 25,
     /* stopButton  */ 26,
     /* button3  */ 27,
     /* button4  */ 14
   };
   cfg.pwmHz   = 20000;
-  cfg.pwmBits = 11; // ESP32 can't handle 12 bits @ 20kHz
+  cfg.pwmBits = 11; // ESP32 couldn't handle 12 bits @ 20kHz
   cfg.chIn1   = 0;
   cfg.chIn2   = 1;
 
-  cfg.cruisePct = 65.0f;
-  cfg.t.rampUpMs       = 50;
-  cfg.t.rampDownMs     = 50;
-  cfg.t.coastBetweenMs = 10;
-  cfg.t.forwardRunMs   = 6000;
-  cfg.t.reverseRunMs   = 6000;
+  cfg.cruisePct = 72.0f;
+  cfg.t.rampUpMs       = 10;
+  cfg.t.rampDownMs     = 10;
+  cfg.t.coastBetweenMs = 50;
+  cfg.t.forwardRunMs   = 10000;
+  cfg.t.reverseRunMs   = 10000;
 
   // cfg.defaultRunDurationMs = seconds(120); // Commented out defaults to 0, which is continuous
-  
 
   initializeProcessor(cfg);
 
-  // Start automatically for quick bench tests (optional)
-  // startContinuousCycle();
-  // startTimedCycle(30UL * 60UL * 1000UL);  // 30 minutes
 }
 
 void loop() {

@@ -211,17 +211,18 @@ void serviceProcessor()
   // Buttons
   if (checkPressed(Bstart))
   {
-    LOGFLN("BTN start");
-    if (G.defaultRunDurationMs)
-      startTimedCycle(G.defaultRunDurationMs);
-    else
-      startContinuousCycle();
+    LOGFLN("BTN start (toggle)");
+    if (!running) {
+      if (G.defaultRunDurationMs)
+        startTimedCycle(G.defaultRunDurationMs);
+      else
+        startContinuousCycle();
+    } else {
+      stopCycleCoast();
+    }
   }
-  if (checkPressed(Bstop))
-  {
-    LOGFLN("BTN stop");
-    stopCycleCoast();
-  }
+  // The stop button is reserved for future use, but not active in logic.
+  // if (checkPressed(Bstop)) { /* reserved for later */ }
 
   // Timed stop
   if (running && runEndMs && (int32_t)(millis() - runEndMs) >= 0)
