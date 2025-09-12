@@ -37,16 +37,16 @@ void setup() {
     /* button4  */ 14
   };
   cfg.pwmHz   = 20000;
-  cfg.pwmBits = 11; // 11 instead of 12 b/c esp32 can't handle 12 bits @ 20kHz
+  cfg.pwmBits = 11; // ESP32 can't handle 12 bits @ 20kHz
   cfg.chIn1   = 0;
   cfg.chIn2   = 1;
 
   cfg.cruisePct = 65.0f;
-  cfg.t.rampUpMs       = 300;
-  cfg.t.rampDownMs     = 200;
-  cfg.t.coastBetweenMs = 500;
-  cfg.t.forwardRunMs   = 10000;
-  cfg.t.reverseRunMs   = 10000;
+  cfg.t.rampUpMs       = 50;
+  cfg.t.rampDownMs     = 50;
+  cfg.t.coastBetweenMs = 10;
+  cfg.t.forwardRunMs   = 6000;
+  cfg.t.reverseRunMs   = 6000;
 
   // cfg.defaultRunDurationMs = seconds(120); // Commented out defaults to 0, which is continuous
   
