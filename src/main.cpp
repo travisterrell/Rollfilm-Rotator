@@ -26,8 +26,10 @@ void setup() {
   }
 #endif
 
-  // ESP32-WROOM-32 friendly pins (leave room for two more buttons and an I2C display)
+  // Auto-detect chip and configure pins accordingly
   ProcessorConfig cfg;
+#ifdef ESP32
+  // ESP32-WROOM-32 friendly pins (leave room for two more buttons and an I2C display)
   cfg.pins = {
     /* motorPWM1   */ 18,
     /* motorPWM2   */ 19,
@@ -38,6 +40,19 @@ void setup() {
   };
   cfg.pwmHz   = 20000;
   cfg.pwmBits = 11; // ESP32 couldn't handle 12 bits @ 20kHz
+#elif defined(ESP8266)
+  // ESP8266 D1 Mini friendly pins
+  cfg.pins = {
+    /* motorPWM1   */ D1,  // GPIO5
+    /* motorPWM2   */ D2,  // GPIO4
+    /* toggleButton */ D5, // GPIO14
+    /* stopButton  */ D6,  // GPIO12
+    /* button3  */ D7,     // GPIO13
+    /* button4  */ D8      // GPIO15
+  };
+  cfg.pwmHz   = 1000;  // ESP8266 PWM frequency (1kHz is good for motors)
+  cfg.pwmBits = 10;    // ESP8266 supports 10-bit PWM (0-1023)
+#endif
   cfg.chIn1   = 0;
   cfg.chIn2   = 1;
 
@@ -45,8 +60,8 @@ void setup() {
   cfg.t.rampUpMs       = 10;
   cfg.t.rampDownMs     = 10;
   cfg.t.coastBetweenMs = 50;
-  cfg.t.forwardRunMs   = 30000;
-  cfg.t.reverseRunMs   = 30000;
+  cfg.t.forwardRunMs   = 15000;
+  cfg.t.reverseRunMs   = 15000;
 
   // cfg.defaultRunDurationMs = seconds(120); // Commented out defaults to 0, which is continuous
 

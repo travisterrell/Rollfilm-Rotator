@@ -28,11 +28,11 @@ struct ProcessorTimings {
 
 struct ProcessorConfig {
   ProcessorPins pins;
-  // PWM/LEDC
-  int pwmHz   = 20000;   // 20 kHz
-  int pwmBits = 11;      // duty 0..(2^bits-1) // (went with 11 instead of 12 b/c esp32c ledc can't hit 20kHz @ 12-bit resolution)
-  int chIn1   = 0;       // LEDC channel for IN1
-  int chIn2   = 1;       // LEDC channel for IN2
+  // PWM configuration (auto-configured in main.cpp based on chip type)
+  int pwmHz   = 20000;   // PWM frequency (ESP32: up to 20kHz, ESP8266: typically 1kHz for motors)
+  int pwmBits = 11;      // duty 0..(2^bits-1) (ESP32: up to 12-bit, ESP8266: 10-bit)
+  int chIn1   = 0;       // LEDC channel for IN1 (ESP32 only, ignored on ESP8266)
+  int chIn2   = 1;       // LEDC channel for IN2 (ESP32 only, ignored on ESP8266)
   // Motion
   float cruisePct = 65.0f; // nominal duty %
   ProcessorTimings t;
