@@ -28,7 +28,19 @@ void setup() {
 
   // Auto-detect chip and configure pins accordingly
   ProcessorConfig cfg;
-#ifdef ESP32
+#if defined(CONFIG_IDF_TARGET_ESP32C6)
+  // ESP32-C6 Super Mini friendly pins
+  cfg.pins = {
+    /* motorPWM1   */ 2,   // GPIO2 - PWM capable
+    /* motorPWM2   */ 3,   // GPIO3 - PWM capable
+    /* toggleButton */ 9,  // GPIO9 - safe input pin
+    /* stopButton  */ 10,  // GPIO10 - safe input pin
+    /* button3  */ 6,      // GPIO6 - safe input pin
+    /* button4  */ 7       // GPIO7 - safe input pin
+  };
+  cfg.pwmHz   = 20000;  // ESP32-C6 supports high frequency PWM
+  cfg.pwmBits = 11;     // ESP32-C6 supports up to 14-bit PWM
+#elif defined(ESP32)
   // ESP32-WROOM-32 friendly pins (leave room for two more buttons and an I2C display)
   cfg.pins = {
     /* motorPWM1   */ 18,

@@ -76,9 +76,9 @@ namespace
     for (uint16_t i = 0; i <= steps; ++i)
     {
       uint16_t d = (uint32_t)targetDuty * i / steps;
-#ifdef ESP32
-      ledcWrite(G.chIn2, 0); // coast other leg
-      ledcWrite(G.chIn1, d); // forward drive on IN1
+#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+      ledcWrite(G.pins.in2, 0); // coast other leg
+      ledcWrite(G.pins.in1, d); // forward drive on IN1
 #elif defined(ESP8266)
       analogWrite(G.pins.in2, 0); // coast other leg
       analogWrite(G.pins.in1, d); // forward drive on IN1
@@ -94,9 +94,9 @@ namespace
     for (uint16_t i = 0; i <= steps; ++i)
     {
       uint16_t d = (uint32_t)targetDuty * i / steps;
-#ifdef ESP32
-      ledcWrite(G.chIn1, 0);
-      ledcWrite(G.chIn2, d); // reverse drive on IN2
+#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+      ledcWrite(G.pins.in1, 0);
+      ledcWrite(G.pins.in2, d); // reverse drive on IN2
 #elif defined(ESP8266)
       analogWrite(G.pins.in1, 0);
       analogWrite(G.pins.in2, d); // reverse drive on IN2
@@ -128,11 +128,10 @@ void initializeProcessor(const ProcessorConfig &cfg)
   G = cfg; // copy-by-value
 
   // PWM setup - auto-detect platform
-#ifdef ESP32
-  ledcSetup(G.chIn1, G.pwmHz, G.pwmBits);
-  ledcSetup(G.chIn2, G.pwmHz, G.pwmBits);
-  ledcAttachPin(G.pins.in1, G.chIn1);
-  ledcAttachPin(G.pins.in2, G.chIn2);
+#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+  // ESP32 and ESP32-C6 both use newer LEDC API
+  ledcAttach(G.pins.in1, G.pwmHz, G.pwmBits);
+  ledcAttach(G.pins.in2, G.pwmHz, G.pwmBits);
 #elif defined(ESP8266)
   // ESP8266 uses analogWrite with analogWriteFreq
   analogWriteFreq(G.pwmHz);
@@ -154,9 +153,10 @@ void initializeProcessor(const ProcessorConfig &cfg)
   Bstop.pin = G.pins.btnStop;
 
   // Idle (coast)
-#ifdef ESP32
-  ledcWrite(G.chIn1, 0);
-  ledcWrite(G.chIn2, 0);
+#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+  // ESP32 and ESP32-C6 both use pin-based ledcWrite
+  ledcWrite(G.pins.in1, 0);
+  ledcWrite(G.pins.in2, 0);
 #elif defined(ESP8266)
   analogWrite(G.pins.in1, 0);
   analogWrite(G.pins.in2, 0);
@@ -170,9 +170,9 @@ void setDefaultRunDurationMs(uint32_t ms) { G.defaultRunDurationMs = ms; }
 
 void runForwardDuty(uint16_t duty)
 {
-#ifdef ESP32
-  ledcWrite(G.chIn2, 0); // coast leg
-  ledcWrite(G.chIn1, duty);
+#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+  ledcWrite(G.pins.in2, 0); // coast leg
+  ledcWrite(G.pins.in1, duty);
 #elif defined(ESP8266)
   analogWrite(G.pins.in2, 0); // coast leg
   analogWrite(G.pins.in1, duty);
@@ -180,9 +180,9 @@ void runForwardDuty(uint16_t duty)
 }
 void runReverseDuty(uint16_t duty)
 {
-#ifdef ESP32
-  ledcWrite(G.chIn1, 0);
-  ledcWrite(G.chIn2, duty);
+#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+  ledcWrite(G.pins.in1, 0);
+  ledcWrite(G.pins.in2, duty);
 #elif defined(ESP8266)
   analogWrite(G.pins.in1, 0);
   analogWrite(G.pins.in2, duty);
@@ -190,9 +190,9 @@ void runReverseDuty(uint16_t duty)
 }
 void coastStop()
 {
-#ifdef ESP32
-  ledcWrite(G.chIn1, 0);
-  ledcWrite(G.chIn2, 0);
+#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+  ledcWrite(G.pins.in1, 0);
+  ledcWrite(G.pins.in2, 0);
 #elif defined(ESP8266)
   analogWrite(G.pins.in1, 0);
   analogWrite(G.pins.in2, 0);
@@ -201,9 +201,9 @@ void coastStop()
 void brakeStop()
 {
   uint32_t maxd = pwmMax();
-#ifdef ESP32
-  ledcWrite(G.chIn1, maxd);
-  ledcWrite(G.chIn2, maxd);
+#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+  ledcWrite(G.pins.in1, maxd);
+  ledcWrite(G.pins.in2, maxd);
 #elif defined(ESP8266)
   analogWrite(G.pins.in1, maxd);
   analogWrite(G.pins.in2, maxd);

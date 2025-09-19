@@ -28,11 +28,11 @@ struct ProcessorTimings {
 
 struct ProcessorConfig {
   ProcessorPins pins;
-  // PWM configuration (auto-configured in main.cpp based on chip type)
-  int pwmHz   = 20000;   // PWM frequency (ESP32: up to 20kHz, ESP8266: typically 1kHz for motors)
-  int pwmBits = 11;      // duty 0..(2^bits-1) (ESP32: up to 12-bit, ESP8266: 10-bit)
-  int chIn1   = 0;       // LEDC channel for IN1 (ESP32 only, ignored on ESP8266)
-  int chIn2   = 1;       // LEDC channel for IN2 (ESP32 only, ignored on ESP8266)
+  // PWM configuration (auto-configured in main.cpp based on chip type declared in platformio.ini)
+  int pwmHz   = 20000;   // PWM frequency (ESP32/ESP32-C6: up to 20kHz, ESP8266: typically 1kHz for motors)
+  int pwmBits = 11;      // duty 0..(2^bits-1) (ESP32/ESP32-C6: up to 14-bit, ESP8266: 10-bit)
+  int chIn1   = 0;       // LEDC channel for IN1 (ESP32/ESP32-C6 only, ignored on ESP8266)
+  int chIn2   = 1;       // LEDC channel for IN2 (ESP32/ESP32-C6 only, ignored on ESP8266)
   // Motion
   float cruisePct = 65.0f; // nominal duty %
   ProcessorTimings t;
@@ -55,7 +55,7 @@ void brakeStop();
 void startTimedCycle(uint32_t durationMs);  // 0 => indefinite
 void startContinuousCycle();                // convenience for indefinite
 void stopCycleCoast();                      // ramp down then coast
-void stopCycleBrake();   // ramp optional -> brake, sets running=false & phase=IDLE
+void stopCycleBrake();   // brake, sets running=false & phase=IDLE
 
 // Service functions (call from loop)
 void serviceProcessor();   // buttons, timed stop, phase machine
