@@ -14,8 +14,8 @@
   #define LOGFLN(...) do{}while(0)
 #endif
 
-constexpr uint32_t minutes(uint32_t m){ return m * 60UL * 1000UL; }
-constexpr uint32_t seconds(uint32_t s){ return s * 1000UL; }
+constexpr uint32_t MinutesToMs(uint32_t m){ return m * 60UL * 1000UL; }
+constexpr uint32_t SecondsToMs(uint32_t s){ return s * 1000UL; }
 
 void setup() {
 #if ENABLE_SERIAL
@@ -75,13 +75,13 @@ void setup() {
   cfg.t.forwardRunMs   = 15000;
   cfg.t.reverseRunMs   = 15000;
 
-  // cfg.defaultRunDurationMs = seconds(120); // Commented out defaults to 0, which is continuous
+  // cfg.defaultRunDurationMs = SecondsToMs(120); // Commented out defaults to 0, which is continuous
 
-  initializeProcessor(cfg);
+  InitializeProcessor(cfg);
 
 }
 
 void loop() {
-  handleSerialCLI();   // USB CLI (noop if nothing connected)
-  serviceProcessor();   // buttons, timed stop, phase machine
+  HandleSerialCLI();   // USB CLI (noop if nothing connected)
+  ServiceProcessor();   // buttons, timed stop, phase machine
 }

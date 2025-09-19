@@ -7,7 +7,7 @@ namespace
   constexpr uint32_t PWM_MAX_MASKS[13] = {
       0, 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095};
 
-  inline uint32_t pwmMax()
+  inline uint32_t PwmMax()
   {
     int b = G.pwmBits;
     if (b < 1)
@@ -17,13 +17,13 @@ namespace
     return PWM_MAX_MASKS[b];
   }
 
-  inline uint16_t pctToDuty(float pct)
+  inline uint16_t PercentageToDutyCycle(float pct)
   {
     if (pct < 0)
       pct = 0;
     if (pct > 100)
       pct = 100;
-    return (uint16_t)lroundf(pct * pwmMax() / 100.0f);
+    return (uint16_t)lroundf(pct * PwmMax() / 100.0f);
   }
 
   // Debounced buttons
@@ -34,9 +34,9 @@ namespace
     bool lastRead{true};
     uint32_t lastChangeMs{0};
   };
-  Btn Bstart, Bstop;
+  Btn Bstart;
 
-  bool checkPressed(Btn &b, uint16_t debounceMs = 30)
+  bool CheckButtonPress(Btn &b, uint16_t debounceMs = 30)
   {
     bool r = digitalRead(b.pin); // HIGH released, LOW pressed
     uint32_t now = millis();
@@ -68,7 +68,7 @@ namespace
   uint32_t runEndMs = 0; // 0 => indefinite
 
   // Blocking ramps (short; fine for 200–300 ms)
-  void rampForward(uint16_t targetDuty, uint16_t ms)
+  void RampForward(uint16_t targetDuty, uint16_t ms)
   {
     uint16_t steps = ms / 10;
     if (steps == 0)
@@ -86,7 +86,7 @@ namespace
       delay(10);
     }
   }
-  void rampReverse(uint16_t targetDuty, uint16_t ms)
+  void RampReverse(uint16_t targetDuty, uint16_t ms)
   {
     uint16_t steps = ms / 10;
     if (steps == 0)
@@ -123,7 +123,7 @@ static const char *phaseName(Phase p)
 }
 
 // ---------- Public API ----------
-void initializeProcessor(const ProcessorConfig &cfg)
+void InitializeProcessor(const ProcessorConfig &cfg)
 {
   G = cfg; // copy-by-value
 
@@ -135,7 +135,7 @@ void initializeProcessor(const ProcessorConfig &cfg)
 #elif defined(ESP8266)
   // ESP8266 uses analogWrite with analogWriteFreq
   analogWriteFreq(G.pwmHz);
-  analogWriteRange(pwmMax()); // Set PWM range to match pwmBits
+  analogWriteRange(PwmMax()); // Set PWM range to match pwmBits
   pinMode(G.pins.in1, OUTPUT);
   pinMode(G.pins.in2, OUTPUT);
 #endif
@@ -150,7 +150,6 @@ void initializeProcessor(const ProcessorConfig &cfg)
 
   // Init button state objects
   Bstart.pin = G.pins.btnStart;
-  Bstop.pin = G.pins.btnStop;
 
   // Idle (coast)
 #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
@@ -162,13 +161,14 @@ void initializeProcessor(const ProcessorConfig &cfg)
   analogWrite(G.pins.in2, 0);
 #endif
 
-  LOGFLN("Agitator init: PWM=%dkHz bits=%d, cruise=%.1f%%",
+  LOGFLN("Processor init: PWM=%dkHz bits=%d, cruise=%.1f%%",
          G.pwmHz / 1000, G.pwmBits, G.cruisePct);
 }
 
-void setDefaultRunDurationMs(uint32_t ms) { G.defaultRunDurationMs = ms; }
-
-void runForwardDuty(uint16_t duty)
+//--------------------------------
+// Motor control basics
+//--------------------------------
+void RunForwardDuty(uint16_t duty)
 {
 #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
   ledcWrite(G.pins.in2, 0); // coast leg
@@ -178,7 +178,8 @@ void runForwardDuty(uint16_t duty)
   analogWrite(G.pins.in1, duty);
 #endif
 }
-void runReverseDuty(uint16_t duty)
+
+void RunReverseDuty(uint16_t duty)
 {
 #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
   ledcWrite(G.pins.in1, 0);
@@ -188,7 +189,8 @@ void runReverseDuty(uint16_t duty)
   analogWrite(G.pins.in2, duty);
 #endif
 }
-void coastStop()
+
+void CoastStop()
 {
 #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
   ledcWrite(G.pins.in1, 0);
@@ -198,9 +200,10 @@ void coastStop()
   analogWrite(G.pins.in2, 0);
 #endif
 }
-void brakeStop()
+
+void BrakeStop()
 {
-  uint32_t maxd = pwmMax();
+  uint32_t maxd = PwmMax();
 #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
   ledcWrite(G.pins.in1, maxd);
   ledcWrite(G.pins.in2, maxd);
@@ -210,75 +213,76 @@ void brakeStop()
 #endif
 }
 
-void startTimedCycle(uint32_t durationMs)
+//--------------------------------
+// High-level patterns
+//--------------------------------
+void SetDefaultRunDurationMs(uint32_t ms) { G.defaultRunDurationMs = ms; }
+
+void StartTimedCycle(uint32_t durationMs)
 {
-  uint16_t cruise = pctToDuty(G.cruisePct);
+  uint16_t cruise = PercentageToDutyCycle(G.cruisePct);
   running = true;
   dirForward = true;
   runEndMs = (durationMs ? millis() + durationMs : 0);
 
-  rampForward(cruise, G.t.rampUpMs);
+  RampForward(cruise, G.t.rampUpMs);
   phase = Phase::RUN_FWD;
   phaseStartMs = millis();
 }
 
-void startContinuousCycle() { startTimedCycle(0); }
+void StartContinuousCycle() { StartTimedCycle(0); }
 
-void stopCycleCoast()
+void StopCycleCoast()
 {
   uint16_t zero = 0;
   if (phase == Phase::RUN_FWD)
-    rampForward(zero, G.t.rampDownMs);
+    RampForward(zero, G.t.rampDownMs);
   else if (phase == Phase::RUN_REV)
-    rampReverse(zero, G.t.rampDownMs);
-  coastStop();
+    RampReverse(zero, G.t.rampDownMs);
+  CoastStop();
   running = false;
   phase = Phase::IDLE;
 }
 
-void stopCycleBrake()
+void StopCycleBrake()
 {
-  // For a gentle ramp first:
-  /*
-  uint16_t zero = 0;
-  if (phase == Phase::RUN_FWD)      rampForward(zero, G.t.rampDownMs);
-  else if (phase == Phase::RUN_REV) rampReverse(zero, G.t.rampDownMs);
-  */
-  brakeStop();
+  BrakeStop();
   running = false;
   phase = Phase::IDLE;
 }
 
-void serviceProcessor()
+void ServiceProcessor()
 {
-  // Buttons
-  if (checkPressed(Bstart))
+  // Handle button (toggle state)
+  if (CheckButtonPress(Bstart))
   {
-    LOGFLN("BTN start (toggle)");
-    if (!running) {
-      if (G.defaultRunDurationMs)
-        startTimedCycle(G.defaultRunDurationMs);
-      else
-        startContinuousCycle();
-    } else {
-      stopCycleCoast();
+    LOGFLN("Button pressed (toggle)");
+    if (!running)
+    {
+      G.defaultRunDurationMs > 0
+          ? StartTimedCycle(G.defaultRunDurationMs)
+          : StartContinuousCycle();
+    }
+    else
+    {
+      StopCycleCoast();
     }
   }
-  // The stop button is reserved for future use, but not active in logic.
-  // if (checkPressed(Bstop)) { /* reserved for later */ }
 
   // Timed stop
   if (running && runEndMs && (int32_t)(millis() - runEndMs) >= 0)
   {
-    stopCycleCoast();
+    StopCycleCoast();
   }
 
-  // Phase machine (non-blocking except short ramps at transitions)
+  //-----------------------------------------------------------------
+  // Phase Machine (non-blocking except short ramps at transitions)  
+  //-----------------------------------------------------------------
   if (!running)
     return;
 
   uint32_t now = millis();
-  uint16_t cruise = pctToDuty(G.cruisePct);
+  uint16_t cruise = PercentageToDutyCycle(G.cruisePct);
 
   switch (phase)
   {
@@ -286,10 +290,10 @@ void serviceProcessor()
     dirForward = true;
     if (now - phaseStartMs >= G.t.forwardRunMs)
     {
-      rampForward(0, G.t.rampDownMs);
-      coastStop();
+      RampForward(0, G.t.rampDownMs);
+      CoastStop();
       delay(G.t.coastBetweenMs);
-      rampReverse(cruise, G.t.rampUpMs);
+      RampReverse(cruise, G.t.rampUpMs);
       phase = Phase::RUN_REV;
       phaseStartMs = millis();
     }
@@ -299,10 +303,10 @@ void serviceProcessor()
     dirForward = false;
     if (now - phaseStartMs >= G.t.reverseRunMs)
     {
-      rampReverse(0, G.t.rampDownMs);
-      coastStop();
+      RampReverse(0, G.t.rampDownMs);
+      CoastStop();
       delay(G.t.coastBetweenMs);
-      rampForward(cruise, G.t.rampUpMs);
+      RampForward(cruise, G.t.rampUpMs);
       phase = Phase::RUN_FWD;
       phaseStartMs = millis();
     }
@@ -314,7 +318,8 @@ void serviceProcessor()
   }
 }
 
-void handleSerialCLI()
+
+void HandleSerialCLI()
 {
   if (!Serial.available())
     return;
@@ -322,47 +327,49 @@ void handleSerialCLI()
 
   if (cmd == 'f')
   {
-    uint16_t d = pctToDuty(G.cruisePct);
+    uint16_t d = PercentageToDutyCycle(G.cruisePct);
     LOGFLN("Manual FWD %.1f%%", G.cruisePct);
-    rampForward(d, G.t.rampUpMs);
+    RampForward(d, G.t.rampUpMs);
   }
   else if (cmd == 'r')
   {
-    uint16_t d = pctToDuty(G.cruisePct);
+    uint16_t d = PercentageToDutyCycle(G.cruisePct);
     LOGFLN("Manual REV %.1f%%", G.cruisePct);
-    rampReverse(d, G.t.rampUpMs);
+    RampReverse(d, G.t.rampUpMs);
   }
   else if (cmd == 'c')
   {
     LOGFLN("Coast stop");
-    stopCycleCoast();
+    StopCycleCoast();
   }
   else if (cmd == 'b')
   {
     LOGFLN("Brake stop");
-    stopCycleBrake();
+    StopCycleBrake();
   }
   else if (cmd == 'a')
   {
     LOGFLN("Auto pattern start (indef)");
-    startContinuousCycle();
+    StartContinuousCycle();
   }
   else if (cmd == 't')
   {
     while (!Serial.available())
-    { /* wait */
+    { /* wait for serial */
     }
-    int minutes = Serial.parseInt();
-    if (minutes <= 0)
-      minutes = 1;
-    LOGFLN("Timed run %d min", minutes);
-    startTimedCycle((uint32_t)minutes * 60UL * 1000UL);
+
+    int MinutesToMs = Serial.parseInt();
+    if (MinutesToMs <= 0)
+      MinutesToMs = 1;
+    LOGFLN("Timed run %d min", MinutesToMs);
+    StartTimedCycle((uint32_t)MinutesToMs * 60UL * 1000UL);
   }
   else if (cmd == 'u')
   {
     while (!Serial.available())
-    { /* wait */
+    { /* wait for serial */
     }
+
     float pct = Serial.parseFloat();
     G.cruisePct = pct;
     LOGFLN("Cruise set to %.1f%%", G.cruisePct);

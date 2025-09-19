@@ -40,23 +40,23 @@ struct ProcessorConfig {
   uint32_t defaultRunDurationMs = 0; // 0 = indefinite
 };
 
-void setDefaultRunDurationMs(uint32_t ms);
+void SetDefaultRunDurationMs(uint32_t ms);
 
 // Initialize pins, LEDC, buttons; coast the motor.
-void initializeProcessor(const ProcessorConfig& cfg);
+void InitializeProcessor(const ProcessorConfig& cfg);
 
 // Public primitives (drive↔coast mode)
-void runForwardDuty(uint16_t duty);  // duty is 0..(2^pwmBits-1)
-void runReverseDuty(uint16_t duty);
-void coastStop();
-void brakeStop();
+void RunForwardDuty(uint16_t duty);  // duty is 0..(2^pwmBits-1)
+void RunReverseDuty(uint16_t duty);
+void CoastStop();
+void BrakeStop();
 
 // Start/stop high-level patterns
-void startTimedCycle(uint32_t durationMs);  // 0 => indefinite
-void startContinuousCycle();                // convenience for indefinite
-void stopCycleCoast();                      // ramp down then coast
-void stopCycleBrake();   // brake, sets running=false & phase=IDLE
+void StartTimedCycle(uint32_t durationMs);  // 0 => indefinite
+void StartContinuousCycle();                // convenience for indefinite
+void StopCycleCoast();                      // ramp down then coast
+void StopCycleBrake();   // brake, sets running=false & phase=IDLE
 
 // Service functions (call from loop)
-void serviceProcessor();   // buttons, timed stop, phase machine
-void handleSerialCLI();   // optional USB CLI (noop if no data)
+void ServiceProcessor();   // buttons, timed stop, phase machine
+void HandleSerialCLI();   // optional USB CLI (noop if no data)
