@@ -14,8 +14,6 @@ struct ProcessorPins {
   int in2;       // DRV8871 IN2 (PWM-capable)
   int btnStart;  // active-low
   int btnStop;   // active-low
-  int btnRes1;   // reserved (not used yet)
-  int btnRes2;   // reserved (not used yet)
 };
 
 struct ProcessorTimings {

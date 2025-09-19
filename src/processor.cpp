@@ -143,11 +143,6 @@ void InitializeProcessor(const ProcessorConfig &cfg)
   // Buttons
   pinMode(G.pins.btnStart, INPUT_PULLUP);
   pinMode(G.pins.btnStop, INPUT_PULLUP);
-  if (G.pins.btnRes1 >= 0)
-    pinMode(G.pins.btnRes1, INPUT_PULLUP);
-  if (G.pins.btnRes2 >= 0)
-    pinMode(G.pins.btnRes2, INPUT_PULLUP);
-
   // Init button state objects
   Bstart.pin = G.pins.btnStart;
 

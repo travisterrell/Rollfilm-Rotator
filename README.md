@@ -118,6 +118,7 @@ When connected via USB, the system provides:
 - Button press notifications  
 - Phase transitions
 - PWM configuration details
+- Set `ENABLE_SERIAL` to 1 in `main.cpp`.
 
 ## Configuration
 
@@ -136,53 +137,25 @@ cfg.t.reverseRunMs = 30000;   // 30 seconds reverse
 
 ### Continuous vs Timed Operation
 ```cpp
-// For continuous operation (manual stop only)
-// cfg.defaultRunDurationMs = 0;  // Default is 0 (continuous)
+// For continuous operation (default)
+cfg.defaultRunDurationMs = 0;
 
 // For timed operation (auto-stop after duration)
-cfg.defaultRunDurationMs = seconds(120);  // Stop after 2 minutes
+cfg.defaultRunDurationMs = seconds(120);
 ```
 
 ## Safety Features
 
 - **Soft Start/Stop**: Gradual PWM ramping prevents mechanical shock
 - **Coast Mode**: Motor stops by removing power (vs. active braking)
-- **Debounced Buttons**: Prevents accidental multiple triggers
-- **Watchdog Protection**: Timed cycles automatically stop
 
-## Troubleshooting
-
-### Common Issues
-
-| Problem | Solution |
-|---------|----------|
-| Motor doesn't turn | Check power supply, motor driver connections |
-| Button not responding | Verify GPIO pin connections and pullup configuration |
-| Compilation errors | Ensure correct PlatformIO environment selected |
-| Serial not working | Check USB cable, driver installation |
-
-### Debug Mode
-Enable detailed logging by ensuring `ENABLE_SERIAL` is set to 1 in `main.cpp`.
 
 ## License
 
-This project is open source. Please check the repository for specific license terms.
-
-## Contributing
-
-Contributions are welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Test on your target hardware
-4. Submit a pull request
+BSD. Do whatever you want.
 
 ## Hardware Compatibility Notes
 
-- **ESP32**: Proven stable at 20kHz PWM frequency
-- **ESP32-C6**: Same capabilities as ESP32, newer architecture
+- **ESP32 & C6**: Proven stable at 20kHz PWM frequency
 - **ESP8266**: Limited to 1kHz PWM due to hardware constraints
 - All platforms support the same feature set with automatic optimization
-
----
-
-*For technical support or questions, please open an issue on the project repository.*
