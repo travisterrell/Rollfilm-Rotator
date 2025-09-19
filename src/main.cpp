@@ -36,7 +36,7 @@ void setup() {
     /* toggleButton */ 9,  // GPIO9 - safe input pin
     /* stopButton  */ 10,  // GPIO10 - safe input pin
   };
-  cfg.pwmHz   = 20000;  // ESP32-C6 supports high frequency PWM
+  cfg.pwmHz   = 1000;   // Lower frequency for better H-bridge compatibility
   cfg.pwmBits = 11;     // ESP32-C6 supports up to 14-bit PWM
 #elif defined(ESP32)
   // ESP32-WROOM-32 friendly pins (leave room for two more buttons and an I2C display)
