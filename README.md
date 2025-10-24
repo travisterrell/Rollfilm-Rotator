@@ -6,9 +6,9 @@ A microcontroller-based control system for a rotary film processing rig, support
 
 This project provides automated motor control for rotary film processors. When the momentary button is pressed, the system begins alternating between forward and reverse rotation according to configurable timing and speed parameters, making it suitable for various film processing workflows. A 2nd press of the button stops the rotation cycle.
 
-Note that a timer is not implemented because I use this [DIY lift-style processor](https://www.printables.com/model/1183451-film-processor-rotationsprozessor-fur-jobo-tank) and follow Jobo's recommendation of maintaining continuous rotation while adding/removing chemicals.
+Note that a timer is not implemented or planned because I use a DIY [lift-style processor](https://www.printables.com/model/1183451-film-processor-rotationsprozessor-fur-jobo-tank) and follow Jobo's recommendation of maintaining continuous rotation whilst adding/removing chemicals.
 
-**Next up:**  Rotary encoders for setting rotation speed & direction change intervals and/or buttons for preset programs.
+**Planned:** Either Rotary encoders for setting rotation speed & direction intervals or simple buttons for preset programs.
 
 ## Features
 
