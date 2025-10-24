@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "processor.h"
 
-// --- Serial config (make headless easy) ---
+// --- Serial debugging config ---
 #define ENABLE_SERIAL       1
 #define WAIT_FOR_SERIAL_MS  1500
 
@@ -26,50 +26,50 @@ void setup() {
   }
 #endif
 
-  // Auto-detect chip and configure pins accordingly
+  // Configure pins based on specified chip platform
   ProcessorConfig cfg;
 #if defined(CONFIG_IDF_TARGET_ESP32C6)
   // ESP32-C6 Super Mini friendly pins
   cfg.pins = {
-    /* motorPWM1   */ 2,   // GPIO2 - PWM capable
-    /* motorPWM2   */ 3,   // GPIO3 - PWM capable
-    /* toggleButton */ 9,  // GPIO9 - safe input pin
-    /* stopButton  */ 10,  // GPIO10 - safe input pin
+    2, // motorPWM1
+    3, // motorPWM2
+    9, // toggleButton
+    10, // stopButton
   };
-  cfg.pwmHz   = 1000;   // Lower frequency for better H-bridge compatibility
+  cfg.pwmHz   = 1000; 
   cfg.pwmBits = 11;     // ESP32-C6 supports up to 14-bit PWM
 #elif defined(ESP32)
   // ESP32-WROOM-32 friendly pins (leave room for two more buttons and an I2C display)
   cfg.pins = {
-    /* motorPWM1   */ 18,
-    /* motorPWM2   */ 19,
-    /* toggleButton */ 25,
-    /* stopButton  */ 26,
+    18, // motorPWM1
+    19, // motorPWM2
+    25, // toggleButton
+    26, // stopButton
   };
   cfg.pwmHz   = 20000;
   cfg.pwmBits = 11; // ESP32 couldn't handle 12 bits @ 20kHz
 #elif defined(ESP8266)
   // ESP8266 D1 Mini friendly pins
   cfg.pins = {
-    /* motorPWM1   */ D1,  // GPIO5
-    /* motorPWM2   */ D2,  // GPIO4
-    /* toggleButton */ D5, // GPIO14
-    /* stopButton  */ D6,  // GPIO12
+    D1,  // motorPWM1
+    D2,  // motorPWM2
+    D5,  // toggleButton
+    D6,  // stopButton
   };
-  cfg.pwmHz   = 1000;  // ESP8266 PWM frequency (1kHz is good for motors)
+  cfg.pwmHz   = 1000;  // ESP8266 PWM frequency
   cfg.pwmBits = 10;    // ESP8266 supports 10-bit PWM (0-1023)
 #endif
-  cfg.chIn1   = 0;
+
+  cfg.chIn1   = 0;  
   cfg.chIn2   = 1;
 
-  cfg.cruisePct = 72.0f;
-  cfg.t.rampUpMs       = 10;
-  cfg.t.rampDownMs     = 10;
-  cfg.t.coastBetweenMs = 50;
-  cfg.t.forwardRunMs   = 15000;
-  cfg.t.reverseRunMs   = 15000;
+  cfg.cruisePct = 72.3f; // nominal duty % (roughly equates to RPM on a 100 RPM gearmotor)
 
-  // cfg.defaultRunDurationMs = SecondsToMs(120); // Commented out defaults to 0, which is continuous
+  cfg.t.rampUpMs       = 15;
+  cfg.t.rampDownMs     = 15;
+  cfg.t.coastBetweenMs = 60;
+  cfg.t.forwardRunMs   = 10000;
+  cfg.t.reverseRunMs   = 10000;
 
   InitializeProcessor(cfg);
 

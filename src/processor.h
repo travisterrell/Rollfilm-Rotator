@@ -34,11 +34,7 @@ struct ProcessorConfig {
   // Motion
   float cruisePct = 65.0f; // nominal duty %
   ProcessorTimings t;
-
-  uint32_t defaultRunDurationMs = 0; // 0 = indefinite
 };
-
-void SetDefaultRunDurationMs(uint32_t ms);
 
 // Initialize pins, LEDC, buttons; coast the motor.
 void InitializeProcessor(const ProcessorConfig& cfg);
@@ -50,8 +46,7 @@ void CoastStop();
 void BrakeStop();
 
 // Start/stop high-level patterns
-void StartTimedCycle(uint32_t durationMs);  // 0 => indefinite
-void StartContinuousCycle();                // convenience for indefinite
+void StartContinuousCycle();                // begin alternating forward/reverse pattern
 void StopCycleCoast();                      // ramp down then coast
 void StopCycleBrake();   // brake, sets running=false & phase=IDLE
 

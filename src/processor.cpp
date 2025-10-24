@@ -65,7 +65,6 @@ namespace
   bool running = false;
   bool dirForward = true;
   uint32_t phaseStartMs = 0;
-  uint32_t runEndMs = 0; // 0 => indefinite
 
   // Blocking ramps (short; fine for 200–300 ms)
   void RampForward(uint16_t targetDuty, uint16_t ms)
@@ -218,21 +217,16 @@ void BrakeStop()
 //--------------------------------
 // High-level patterns
 //--------------------------------
-void SetDefaultRunDurationMs(uint32_t ms) { G.defaultRunDurationMs = ms; }
-
-void StartTimedCycle(uint32_t durationMs)
+void StartContinuousCycle()
 {
   uint16_t cruise = PercentageToDutyCycle(G.cruisePct);
   running = true;
   dirForward = true;
-  runEndMs = (durationMs ? millis() + durationMs : 0);
 
   RampForward(cruise, G.t.rampUpMs);
   phase = Phase::RUN_FWD;
   phaseStartMs = millis();
 }
-
-void StartContinuousCycle() { StartTimedCycle(0); }
 
 void StopCycleCoast()
 {
@@ -261,9 +255,7 @@ void ServiceProcessor()
     LOGFLN("Button pressed (toggle)");
     if (!running)
     {
-      G.defaultRunDurationMs > 0
-          ? StartTimedCycle(G.defaultRunDurationMs)
-          : StartContinuousCycle();
+    StartContinuousCycle();
     }
     else
     {
@@ -271,11 +263,6 @@ void ServiceProcessor()
     }
   }
 
-  // Timed stop
-  if (running && runEndMs && (int32_t)(millis() - runEndMs) >= 0)
-  {
-    StopCycleCoast();
-  }
 
   //-----------------------------------------------------------------
   // Phase Machine (non-blocking except short ramps at transitions)  
@@ -354,18 +341,6 @@ void HandleSerialCLI()
     LOGFLN("Auto pattern start (indef)");
     StartContinuousCycle();
   }
-  else if (cmd == 't')
-  {
-    while (!Serial.available())
-    { /* wait for serial */
-    }
-
-    int MinutesToMs = Serial.parseInt();
-    if (MinutesToMs <= 0)
-      MinutesToMs = 1;
-    LOGFLN("Timed run %d min", MinutesToMs);
-    StartTimedCycle((uint32_t)MinutesToMs * 60UL * 1000UL);
-  }
   else if (cmd == 'u')
   {
     while (!Serial.available())
@@ -405,6 +380,6 @@ void HandleSerialCLI()
   }
   else
   {
-    LOGFLN("Commands: f=FWD, r=REV, c=COAST, b=BRAKE, a=AUTO, t[min], u[%%], p=print, 1=test GPIO2, 2=test GPIO3, 0=off");
+    LOGFLN("Commands: f=FWD, r=REV, c=COAST, b=BRAKE, a=AUTO, u[%%], p=print, 1=test GPIO2, 2=test GPIO3, 0=off");
   }
 }

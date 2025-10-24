@@ -1,20 +1,23 @@
-# Rotary Film Processor Controller
+# Rollfilm Rotator: Rotary Film Processor Controller
 
-A microcontroller-based control system for rotary film processing equipment, supporting multiple ESP platforms with compile-time configuration based on selected target.
+A microcontroller-based control system for a rotary film processing rig, supporting multiple ESP platforms (ESP32C6/ESP32/ESP8266).
 
 ## Overview
 
-This project provides automated control for rotary film processors. When the momentary button is pressed, the system begins alternating between forward and reverse rotation with configurable timing parameters and speed parameters, making it suitable for various film processing workflows. A 2nd press of the button stops the rotation cycle. (Next version may have a speed control knob and/or buttons for pre-set speed/direction programs.)
+This project provides automated motor control for rotary film processors. When the momentary button is pressed, the system begins alternating between forward and reverse rotation according to configurable timing and speed parameters, making it suitable for various film processing workflows. A 2nd press of the button stops the rotation cycle.
+
+Note that a timer is not implemented because I use this [DIY lift-style processor](https://www.printables.com/model/1183451-film-processor-rotationsprozessor-fur-jobo-tank) and follow Jobo's recommendation of maintaining continuous rotation while adding/removing chemicals.
+
+**Next up:**  Rotary encoders for setting rotation speed & direction change intervals and/or buttons for preset programs.
 
 ## Features
 
-- **Multi-Platform Support**: Single codebase automatically configures for ESP32, ESP32-C6, and ESP8266 chips based on selected build target
-- **Toggle Control**: Single button starts/stops the processor (no separate stop button needed)
+- **Multi-Platform Support**: Automatically configures for ESP32, ESP32-C6, and ESP8266 chips based on selected build target
+- **Toggle Control**: Single button starts/stops the processor
 - **Bidirectional Motor Control**: Alternates between forward and reverse rotation
-- **Configurable Timing**: Adjustable ramp-up/down times, run durations, and coast periods
-- **PWM Motor Drive**: Smooth motor control with configurable cruise speed percentage
+- **Configurable Timing**: Adjustable ramp-up/down times, run durations, and coast/brake periods
+- **PWM Motor Drive**: Smooth motor control with configurable cruise speed percentage, soft start/stop
 - **Serial CLI**: USB serial interface for monitoring and control (optional)
-- **Timed or Continuous Operation**: Support for both fixed-duration and continuous cycles
 
 ## Supported Hardware
 
@@ -58,7 +61,7 @@ The system uses a DRV8871-style H-bridge driver:
 
 - **`main.cpp`**: Platform-specific pin configuration and main loop
 - **`processor.h/cpp`**: Motor control, timing, and state machine
-- **Compile-Time Configuration**: Uses preprocessor directives to select appropriate pins/PWM parameters for target platform
+- **Compile-Time Configuration**: Uses preprocessor directives to select appropriate pins/PWM parameters for supported target platforms
 
 ### Operating States
 
@@ -80,8 +83,7 @@ cfg.cruisePct        = 72.0f;  // Motor speed percentage
 ## Building and Flashing
 
 ### Prerequisites
-- [PlatformIO](https://platformio.org/) installed
-- USB cable for your development board
+- [PlatformIO](https://platformio.org/) (VS Code Extension or PlatformIO Core)
 
 ### Build Commands
 
@@ -115,7 +117,8 @@ pio device monitor -e <environment_name>
 
 When connected via USB, the system provides:
 - Initialization status
-- Button press notifications  
+- Manual control of start/direction/brake/coast via simple CLI  
+- Button press notifications
 - Phase transitions
 - PWM configuration details
 - Set `ENABLE_SERIAL` to 1 in `main.cpp`.
@@ -123,39 +126,22 @@ When connected via USB, the system provides:
 ## Configuration
 
 ### Motor Speed
-Adjust the cruise percentage in `main.cpp`:
+Adjust the cruise percentage in `main.cpp`. If using a 100 RPM gear motor,  roughly correlates to RPMs.
 ```cpp
 cfg.cruisePct = 72.0f;  // 72% of maximum PWM
 ```
 
+
 ### Timing Cycles
 Modify timing parameters in `main.cpp`:
 ```cpp
-cfg.t.forwardRunMs = 30000;   // 30 seconds forward
-cfg.t.reverseRunMs = 30000;   // 30 seconds reverse
+cfg.t.forwardRunMs = 10000;   // 10 seconds forward
+cfg.t.reverseRunMs = 10000;   // 10 seconds reverse
 ```
+The processor alternates between forward and reverse phases continuously until you issue a stop command.
 
-### Continuous vs Timed Operation
-```cpp
-// For continuous operation (default)
-cfg.defaultRunDurationMs = 0;
-
-// For timed operation (auto-stop after duration)
-cfg.defaultRunDurationMs = seconds(120);
-```
-
-## Safety Features
-
-- **Soft Start/Stop**: Gradual PWM ramping prevents mechanical shock
-- **Coast Mode**: Motor stops by removing power (vs. active braking)
 
 
 ## License
 
-BSD. Do whatever you want.
-
-## Hardware Compatibility Notes
-
-- **ESP32 & C6**: Proven stable at 20kHz PWM frequency
-- **ESP8266**: Limited to 1kHz PWM due to hardware constraints
-- All platforms support the same feature set with automatic optimization
+Do whatever you want.
