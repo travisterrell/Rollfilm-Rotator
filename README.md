@@ -1,4 +1,4 @@
-# Rollfilm Rotator: Rotary Film Processor Controller
+# Rollfilm Rotator: Film Processor Controller
 
 A microcontroller-based control system for a rotary film processing rig, supporting multiple ESP platforms (ESP32C6/ESP32/ESP8266).
 
