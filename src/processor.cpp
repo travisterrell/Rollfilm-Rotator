@@ -67,10 +67,10 @@ namespace
   uint32_t phaseStartMs = 0;
 
   // Blocking ramps (short; fine for 200–300 ms)
-  void RampForward(uint16_t targetDuty, uint16_t ms)
+  void RampForward(uint16_t targetDuty, uint16_t rampTime)
   {
-    LOGFLN("RampForward: target=%d, ms=%d", targetDuty, ms);
-    uint16_t steps = ms / 10;
+    LOGFLN("RampForward: target=%d, rampTime=%d", targetDuty, rampTime);
+    uint16_t steps = rampTime / 10;
     if (steps == 0)
       steps = 1;
     for (uint16_t i = 0; i <= steps; ++i)
@@ -87,10 +87,10 @@ namespace
       delay(10);
     }
   }
-  void RampReverse(uint16_t targetDuty, uint16_t ms)
+  void RampReverse(uint16_t targetDuty, uint16_t rampTime)
   {
-    LOGFLN("RampReverse: target=%d, ms=%d", targetDuty, ms);
-    uint16_t steps = ms / 10;
+    LOGFLN("RampReverse: target=%d, rampTime=%d", targetDuty, rampTime);
+    uint16_t steps = rampTime / 10;
     if (steps == 0)
       steps = 1;
     for (uint16_t i = 0; i <= steps; ++i)
@@ -146,7 +146,6 @@ void InitializeProcessor(const ProcessorConfig &cfg)
 
   // Buttons
   pinMode(G.pins.btnStart, INPUT_PULLUP);
-  pinMode(G.pins.btnStop, INPUT_PULLUP);
   // Init button state objects
   Bstart.pin = G.pins.btnStart;
 
@@ -360,23 +359,38 @@ void HandleSerialCLI()
     // Test GPIO2 (IN1) only
     LOGFLN("Test GPIO2 only at 50%%");
     uint16_t halfDuty = PercentageToDutyCycle(50.0f);
+#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
     ledcWrite(G.pins.in1, halfDuty);
     ledcWrite(G.pins.in2, 0);
+#elif defined(ESP8266)
+    analogWrite(G.pins.in1, halfDuty);
+    analogWrite(G.pins.in2, 0);
+#endif
   }
   else if (cmd == '2')
   {
     // Test GPIO3 (IN2) only
     LOGFLN("Test GPIO3 only at 50%%");
     uint16_t halfDuty = PercentageToDutyCycle(50.0f);
+#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
     ledcWrite(G.pins.in1, 0);
     ledcWrite(G.pins.in2, halfDuty);
+#elif defined(ESP8266)
+    analogWrite(G.pins.in1, 0);
+    analogWrite(G.pins.in2, halfDuty);
+#endif
   }
   else if (cmd == '0')
   {
     // Turn off both
     LOGFLN("Turn off both pins");
+#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
     ledcWrite(G.pins.in1, 0);
     ledcWrite(G.pins.in2, 0);
+#elif defined(ESP8266)
+    analogWrite(G.pins.in1, 0);
+    analogWrite(G.pins.in2, 0);
+#endif
   }
   else
   {

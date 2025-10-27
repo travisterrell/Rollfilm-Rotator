@@ -33,8 +33,7 @@ void setup() {
   cfg.pins = {
     2, // motorPWM1
     3, // motorPWM2
-    9, // toggleButton
-    10, // stopButton
+    9  // toggleButton
   };
   cfg.pwmHz   = 1000; 
   cfg.pwmBits = 11;     // ESP32-C6 supports up to 14-bit PWM
@@ -43,8 +42,7 @@ void setup() {
   cfg.pins = {
     18, // motorPWM1
     19, // motorPWM2
-    25, // toggleButton
-    26, // stopButton
+    25  // toggleButton
   };
   cfg.pwmHz   = 20000;
   cfg.pwmBits = 11; // ESP32 couldn't handle 12 bits @ 20kHz
@@ -53,8 +51,7 @@ void setup() {
   cfg.pins = {
     D1,  // motorPWM1
     D2,  // motorPWM2
-    D5,  // toggleButton
-    D6,  // stopButton
+    D5   // toggleButton
   };
   cfg.pwmHz   = 1000;  // ESP8266 PWM frequency
   cfg.pwmBits = 10;    // ESP8266 supports 10-bit PWM (0-1023)
