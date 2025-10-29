@@ -397,3 +397,25 @@ void HandleSerialCLI()
     LOGFLN("Commands: f=FWD, r=REV, c=COAST, b=BRAKE, a=AUTO, u[%%], p=print, 1=test GPIO2, 2=test GPIO3, 0=off");
   }
 }
+
+// Serial setup and configuration
+void setupSerial(bool waitForSerial, uint32_t baudRate, uint32_t waitTimeMs) {
+  Serial.begin(baudRate);
+  if (waitForSerial && waitTimeMs > 0) {
+    unsigned long t0 = millis();
+    while (!Serial && (millis() - t0) < waitTimeMs) { 
+      // Optional wait for serial connection
+    }
+  }
+  LOGFLN("Serial initialized at %u baud on platform: %s", baudRate, 
+         #if defined(CONFIG_IDF_TARGET_ESP32C6)
+           "ESP32-C6"
+         #elif defined(ESP32)
+           "ESP32"
+         #elif defined(ESP8266)
+           "ESP8266"
+         #else
+           "Unknown"
+         #endif
+  );
+}

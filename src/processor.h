@@ -52,3 +52,6 @@ void StopCycleBrake();        // brake, sets running=false & phase=IDLE
 // Service functions (call from loop)
 void ServiceProcessor();      // buttons, timed stop, phase machine
 void HandleSerialCLI();       // optional USB CLI (noop if no data)
+
+// Serial setup and configuration
+void setupSerial(bool waitForSerial = true, uint32_t baudRate = 115200, uint32_t waitTimeMs = 1500);
