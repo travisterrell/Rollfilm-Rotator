@@ -59,9 +59,9 @@ inline const char *getDashboardHTML()
                     <h3>Tuning & Status</h3>
                     <div class="form-row">
                         <label for="cruiseInput">Cruise %</label>
-                        <input type="number" id="cruiseInput" value="70" min="0" max="100" step="0.5">
+                        <input type="number" id="cruiseInput" value="72.0" min="0" max="100" step="0.5">
                         <button class="button" onclick="applyCruise()">Apply</button>
-                        <button class="button outline" onclick="sendCommand('print_status')">Log Status</button>
+                        <button class="button outline" onclick="sendCommand('print_status')">Print Status</button>
                     </div>
 
                     <h3>Diagnostics</h3>
