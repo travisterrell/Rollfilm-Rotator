@@ -1,6 +1,6 @@
 #include "ota_server.h"
 
-#if HAS_OTA_SUPPORT
+#if ENABLE_OTA
 
 // Global objects for OTA functionality
 AsyncWebServer server(OTA_PORT);
@@ -148,4 +148,4 @@ void serviceOTA() {
   ElegantOTA.loop();   // Handle OTA updates
 }
 
-#endif // HAS_OTA_SUPPORT
+#endif // ENABLE_OTA

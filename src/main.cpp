@@ -12,7 +12,7 @@ void setup() {
   InitializeProcessor(cfg);
 
   // Setup OTA server (no-op on unsupported platforms)
-  #if HAS_OTA_SUPPORT
+  #if ENABLE_OTA
     setupWiFi();
     setupOTA();
   #endif
@@ -23,5 +23,7 @@ void loop() {
   ServiceProcessor();   // buttons, timed stop, phase machine
   
   // Service OTA functionality (no-op on unsupported platforms)
+#if ENABLE_OTA
   serviceOTA();
+#endif
 }

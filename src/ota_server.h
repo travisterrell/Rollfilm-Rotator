@@ -3,14 +3,20 @@
 #include <Arduino.h>
 #include "platform_config.h"
 
-// OTA and WiFi functionality - only compiled for supported platforms
-// Provides no-op functions for unsupported platforms to keep main.cpp clean
+// OTA and WiFi functionality - only compiled when ENABLE_OTA is true
+// Provides no-op functions for when ENABLE_OTA is false (though we have conditionals everywhere anyway)
+#if ENABLE_OTA
+  // Platform-specific includes
+  #if defined(ESP8266)
+    #include <ESP8266WiFi.h>
+    #include <ESPAsyncWebServer.h>
+    #include <ESPAsyncTCP.h>
+  #else
+    #include <WiFi.h>
+    #include <ESPAsyncWebServer.h>
+    #include <AsyncTCP.h>
+  #endif
 
-#if HAS_OTA_SUPPORT
-  // Platform-specific includes for ESP32-C6
-  #include <WiFi.h>
-  #include <ESPAsyncWebServer.h>
-  #include <AsyncTCP.h>
   #include <ElegantOTA.h>
   #include "web_dashboard.h"
   #include "processor.h"
@@ -43,7 +49,7 @@
   void onOTAEnd(bool success);
 
 #else
-  // No-op functions for platforms without OTA support
-  inline void setupOTA() { /* OTA not supported on this platform */ }
-  inline void serviceOTA() { /* OTA not supported on this platform */ }
+  // Redefine as no-op functions for platforms when ENABLE_OTA = false. (Though it should be superfluous since we already check it everywhere.)
+  inline void setupOTA() {  }
+  inline void serviceOTA() { }
 #endif

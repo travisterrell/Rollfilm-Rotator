@@ -5,7 +5,6 @@
 
 // Platform detection and configuration
 // Returns a ProcessorConfig struct with platform-specific pin assignments and PWM settings
-
 inline ProcessorConfig getPlatformConfig() {
   ProcessorConfig cfg;
   
@@ -39,10 +38,11 @@ inline ProcessorConfig getPlatformConfig() {
   cfg.pwmBits = 10;    // ESP8266 supports 10-bit PWM (0-1023)
 #endif
 
-  // Common configuration for all platforms
+  // Common configuration for all platforms 
   cfg.chIn1   = 0;  
   cfg.chIn2   = 1;
 
+  // Speed configuration
   cfg.cruisePct = 72.3f; // nominal duty % (roughly equates to RPM on a 100 RPM gearmotor, but varies by load & voltage)
 
   // Timing configuration
@@ -55,9 +55,7 @@ inline ProcessorConfig getPlatformConfig() {
   return cfg;
 }
 
-// Platform capability detection
-#if defined(CONFIG_IDF_TARGET_ESP32C6)
-  #define HAS_OTA_SUPPORT 1
-#else
-  #define HAS_OTA_SUPPORT 0
+// Handle OTA default
+#ifndef ENABLE_OTA
+  #define ENABLE_OTA 0
 #endif
