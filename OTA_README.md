@@ -18,11 +18,21 @@ This document describes the remote firmware update (OTA) capabilities added to t
 - OTA update interface accessible at `/update`
 - Non-blocking web server operation during normal motor control
 
-### 3. OTA Safety Features
+### 3. Web Dashboard Controls
+- Adjust cruise speed remotely with bounds checking (0–100%)
+- Start/stop automatic cycling, perform manual jogs, and apply brake or cruise from the browser (little practical use; just experimenting with ElegantOTA.)
+- Trigger diagnostic routines (GPIO IN1/IN2 tests, status dump) without a serial cable
+
+### 4. OTA Safety Features
 - **Motor Safety**: Automatically stops motor (brake) when OTA update begins
 - **Progress Monitoring**: Real-time update progress via serial output
 - **Status Callbacks**: Start, progress, and completion callbacks with detailed logging
 - **Error Handling**: Comprehensive error reporting for failed updates
+
+### 5. Live Dashboard Logging
+- Mirrors every `LOGFLN` serial message to the browser via WebSocket
+- Maintains a 50-entry rolling history so new clients immediately see recent activity
+- Log messages include device-side timestamps (millis) to line up with serial output
 
 ## Configuration
 
@@ -103,6 +113,9 @@ OTA update completed successfully! Rebooting...
 
 ### Modified Files
 - `src/main.cpp` - Added WiFi setup, OTA server, and safety callbacks
+- `src/ota_server.cpp` - Async OTA server, WebSocket handlers, log mirroring
+- `src/web_dashboard.h` - Browser UI with live telemetry and log viewer
+- `src/processor.h` - Serial log macros mirrored to OTA dashboard
 - `platformio.ini` - Updated with ElegantOTA library dependency
 
 ### Key Functions Added

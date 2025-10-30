@@ -24,8 +24,8 @@ void loop()
   HandleSerialCLI();  // USB CLI (noop if nothing connected)
   ServiceProcessor(); // buttons, timed stop, phase machine
 
-// Service OTA functionality
-#if ENABLE_OTA
-  serviceOTA();
-#endif
+  // Service OTA functionality
+  #if ENABLE_OTA
+    serviceOTA();
+  #endif
 }

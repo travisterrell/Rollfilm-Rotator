@@ -12,8 +12,7 @@ inline ProcessorConfig getPlatformConfig()
   //---------------------------------------------------------//  
   //       Common configuration for all platforms.           //
   //---------------------------------------------------------//
-
-  // Can switch what forward/reverse means by swapping these
+  // Control which rotation direction is forward/reverse by swapping these
   cfg.chIn1   = 0;  
   cfg.chIn2   = 1;
 
@@ -27,11 +26,9 @@ inline ProcessorConfig getPlatformConfig()
   cfg.t.forwardRunMs   = 10000;
   cfg.t.reverseRunMs   = 10000;
 
-  
   //---------------------------------------------------------//
   //  Platform-specific pin assignments & PWM configuration  //
   //---------------------------------------------------------//
-  
   #if defined(CONFIG_IDF_TARGET_ESP32C6)
     // ESP32-C6 Super Mini friendly pins
     cfg.pins = {

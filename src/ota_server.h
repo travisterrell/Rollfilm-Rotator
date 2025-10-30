@@ -42,9 +42,9 @@
   void serviceOTA();
   void setupWiFi();
   void broadcastStatus();
-  void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, 
+  void handleWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, 
                  void *arg, uint8_t *data, size_t len);
-  void onOTAStart();
+  void handleOTAStart();
   void onOTAProgress(size_t current, size_t final);
   void onOTAEnd(bool success);
 

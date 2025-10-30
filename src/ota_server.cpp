@@ -1,4 +1,6 @@
 #include "ota_server.h"
+#include <cstdarg>
+#include <cstdio>
 
 #if ENABLE_OTA
 
@@ -7,12 +9,107 @@ AsyncWebServer server(OTA_PORT);
 AsyncWebSocket ws("/ws");
 unsigned long ota_progress_millis = 0;
 unsigned long status_update_millis = 0;
+constexpr size_t LOG_HISTORY_SIZE = 50;
+
+struct LogEntry 
+{
+  String message;
+  uint32_t timestamp;
+};
+
+static LogEntry logHistory[LOG_HISTORY_SIZE];
+static size_t logHistoryCount = 0;
+static size_t logHistoryHead = 0;
+
+static String escapeJson(const String &input)
+{
+  String escaped;
+  escaped.reserve(input.length() + 8);
+  for (size_t i = 0; i < input.length(); ++i)
+  {
+    const char c = input[i];
+    switch (c)
+    {
+    case '\\':
+      escaped += "\\\\";
+      break;
+    case '"':
+      escaped += "\\\"";
+      break;
+    case '\n':
+      escaped += "\\n";
+      break;
+    case '\r':
+      escaped += "\\r";
+      break;
+    case '\t':
+      escaped += "\\t";
+      break;
+    default:
+      escaped += c;
+      break;
+    }
+  }
+  return escaped;
+}
+
+static String buildLogPayload(const LogEntry &entry)
+{
+  String payload = "{\"type\":\"log\",\"timestamp\":";
+  payload += String(entry.timestamp);
+  payload += ",\"message\":\"";
+  payload += escapeJson(entry.message);
+  payload += "\"}";
+  return payload;
+}
+
+static void storeLogEntry(const String &message, uint32_t timestamp)
+{
+  logHistory[logHistoryHead].message = message;
+  logHistory[logHistoryHead].timestamp = timestamp;
+  logHistoryHead = (logHistoryHead + 1) % LOG_HISTORY_SIZE;
+  if (logHistoryCount < LOG_HISTORY_SIZE)
+  {
+    ++logHistoryCount;
+  }
+}
+
+static void sendLogHistoryToClient(AsyncWebSocketClient *client)
+{
+  if (!client || logHistoryCount == 0)
+    return;
+
+  size_t oldestIndex = (logHistoryHead + LOG_HISTORY_SIZE - logHistoryCount) % LOG_HISTORY_SIZE;
+  for (size_t i = 0; i < logHistoryCount; ++i)
+  {
+    const LogEntry &entry = logHistory[(oldestIndex + i) % LOG_HISTORY_SIZE];
+    client->text(buildLogPayload(entry));
+  }
+}
+
+void OtaLogLinef(const char *fmt, ...)
+{
+  char buffer[192];
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(buffer, sizeof(buffer), fmt, args);
+  va_end(args);
+
+  const uint32_t now = millis();
+  String message(buffer);
+  storeLogEntry(message, now);
+
+  if (ws.count() > 0)
+  {
+    LogEntry entry{message, now};
+    ws.textAll(buildLogPayload(entry));
+  }
+}
 
 // OTA Progress callbacks
 void onOTAStart()
 {
   Serial.println("OTA update started!");
-  // Stop processor during OTA to avoid interference
   StopCycleBrake();
 }
 
@@ -23,6 +120,7 @@ void onOTAProgress(size_t current, size_t final)
   {
     ota_progress_millis = millis();
     float progress = ((float)current / (float) final) * 100.0f;
+
     Serial.printf("OTA Progress: %.1f%% (%u/%u bytes)\n", progress, current, final);
   }
 }
@@ -40,43 +138,83 @@ void onOTAEnd(bool success)
 }
 
 // WebSocket event handler
-void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,
-               void *arg, uint8_t *data, size_t len)
+void handleWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
 {
   switch (type)
   {
-  case WS_EVT_CONNECT:
-    Serial.printf("WebSocket client connected: %u\n", client->id());
-    break;
-  case WS_EVT_DISCONNECT:
-    Serial.printf("WebSocket client disconnected: %u\n", client->id());
-    break;
-  case WS_EVT_DATA:
-  {
-    AwsFrameInfo *info = (AwsFrameInfo *)arg;
-    if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT)
+    case WS_EVT_CONNECT:
+      Serial.printf("WebSocket client connected: %u\n", client->id());
+      sendLogHistoryToClient(client);
+      break;
+    case WS_EVT_DISCONNECT:
+      Serial.printf("WebSocket client disconnected: %u\n", client->id());
+      break;
+    case WS_EVT_DATA:
     {
-      String command = "";
-      for (size_t i = 0; i < len; i++)
+      AwsFrameInfo *info = (AwsFrameInfo *)arg;
+      if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT)
       {
-        command += (char)data[i];
-      }
-      Serial.printf("WebSocket command received: %s\n", command.c_str());
+        String command = "";
+        for (size_t i = 0; i < len; i++)
+        {
+          command += (char)data[i];
+        }
+        
+        Serial.printf("WebSocket command received: %s\n", command.c_str());
 
-      // Handle remote serial commands
-      if (command == "start")
-        StartContinuousCycle();
-      else if (command == "stop")
-        StopCycleBrake();
-      else if (command == "coast")
-        StopCycleCoast();
-      // Add more commands as needed
+        // Handle remote commands
+        if (command == "start" || command == "auto_start")
+        {
+          ProcessorCommandAutoStart();
+        }
+        else if (command == "stop" || command == "stop_brake")
+        {
+          ProcessorCommandBrakeStop();
+        }
+        else if (command == "coast" || command == "stop_coast")
+        {
+          ProcessorCommandCoastStop();
+        }
+        else if (command == "manual_fwd")
+        {
+          ProcessorCommandManualForward();
+        }
+        else if (command == "manual_rev")
+        {
+          ProcessorCommandManualReverse();
+        }
+        else if (command == "print_status" || command == "status")
+        {
+          ProcessorCommandPrintState();
+        }
+        else if (command == "test_in1")
+        {
+          ProcessorCommandTestIn1();
+        }
+        else if (command == "test_in2")
+        {
+          ProcessorCommandTestIn2();
+        }
+        else if (command == "motors_off")
+        {
+          ProcessorCommandAllOff();
+        }
+        else if (command.startsWith("set_cruise="))
+        {
+          const String value = command.substring(String("set_cruise=").length());
+          float pct = value.toFloat();
+          ProcessorCommandSetCruise(pct);
+        }
+        else
+        {
+          Serial.printf("Unknown WebSocket command: %s\n", command.c_str());
+        }
+      }
+      break;
     }
-    break;
-  }
-  default:
-    break;
-  }
+    default:
+      break;
+    }
 }
 
 // Broadcast status updates to all connected WebSocket clients
@@ -84,7 +222,7 @@ void broadcastStatus()
 {
   if (ws.count() > 0)
   {
-    String status = "{";
+    String status = "{\"type\":\"status\",";
     status += "\"uptime\":" + String(millis()) + ",";
     status += "\"heap\":" + String(ESP.getFreeHeap()) + ",";
     status += "\"wifi_rssi\":" + String(WiFi.RSSI());
@@ -145,7 +283,7 @@ void setupOTA()
     request->send(200, "application/json", json); });
 
   // WebSocket setup
-  ws.onEvent(onWsEvent);
+  ws.onEvent(handleWebSocketEvent);
   server.addHandler(&ws);
 
   // Initialize ElegantOTA
@@ -171,6 +309,13 @@ void serviceOTA()
   ws.cleanupClients();
 
   ElegantOTA.loop(); // Handle OTA updates
+}
+
+#else
+
+void OtaLogLinef(const char *fmt, ...)
+{
+  (void)fmt; // OTA disabled, ignore mirrored logs
 }
 
 #endif // ENABLE_OTA

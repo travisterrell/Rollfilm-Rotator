@@ -13,12 +13,12 @@ Note that a timer is not currently planned because I use a DIY [lift-style proce
 ## Features
 
 - **Multi-Platform Support**: Automatically configures for [the fantastic] ESP32-C6, ESP32, and ESP8266 chips based on selected build target
-- **Toggle Control**: Single button starts/stops the processor
-- **Bidirectional Motor Control**: Alternates between forward and reverse rotations
-- **Configurable Timing**: Adjustable ramp-up/down times, run durations, and coast/brake periods
-- **PWM Motor Drive**: Smooth motor control with configurable cruise speed percentage, soft start/stop
+- **Simple Toggle Control**: Single button starts/stops the processor
+- **Bidirectional Rotation**: Alternates between forward and reverse rotations
+- **Configurable Timing**: Adjustable forward/reverse durations, ramp-up/down times, and coast/brake periods
+- **PWM Motor Drive**: Smooth motor control with configurable cruise speed percentage & soft start/stop/reverse
 - **Serial CLI**: USB serial interface for monitoring and control
-- **📶 Remote Firmware Updates**: Over-the-air (OTA) updates via web interface with live dashboard (ESP32-C6/ESP32/ESP8266 when `ENABLE_OTA=1`) - [See OTA Guide](OTA_README.md)
+- **Remote Firmware & Control**: Over-the-air (OTA) updates, live logging, and controls for speed, start/stop, motor tests, etc.
 
 ## Hardware Requirements
 
@@ -28,6 +28,7 @@ Note that a timer is not currently planned because I use a DIY [lift-style proce
 - **DC Motor (Brushed)** for film processor rotation
 - **Push Button** for start/stop control
 - **Power Supply** appropriate for your motor
+- **Buck circuit** (or maybe a voltage divider) for powering the ESP
 
 ### Supported Hardware
 
@@ -61,7 +62,7 @@ The system uses a DRV8871-style H-bridge driver:
 1. **Power On**: System initializes and enters IDLE state
 2. **Start Processing**: Press the toggle button to begin automatic cycling
 3. **Stop Processing**: Press the toggle button again to stop (motor will ramp down safely)
-4. **Serial Output**: Connect via USB for status messages and debugging
+4. **Debug Output**: Connect via USB/serial or use the web ui for status messages and debugging
 
 ### Serial Interface
 
@@ -71,7 +72,10 @@ When connected via USB, the system provides:
 - Button press notifications
 - Phase transitions
 - PWM configuration details
-- Set `ENABLE_SERIAL` to 1 in `main.cpp`.
+
+### Web Interface
+
+If enabled and wifi info is configured, it provides the same things. Just go to `http://{ip address}`
 
 ## Configuration
 
@@ -89,12 +93,11 @@ cfg.t.reverseRunMs = 10000;   // 10 seconds reverse
 ```
 The processor alternates between forward and reverse phases continuously until you issue a stop command.
 
-### Over-the-Air Updates
+### Web UI & Over-the-Air Updates
 
-OTA support is controlled via the `ENABLE_OTA` build flag. In `platformio.ini`, set the flag to `1` (enabled) or `0` (disabled) per environment:
-
+OTA/Web UI support is controlled via the `ENABLE_OTA` build flag. The flag may be set to `1` (enabled) or `0` (disabled) for each environment separately:
 ```ini
-[env:esp32dev]
+[env:esp32c6]
 build_flags =
      -D ENABLE_OTA=1
      ; ... other flags ...
@@ -152,7 +155,7 @@ cfg.cruisePct        = 72.0f;  // Motor speed percentage
 
 #### Build Commands
 
-```bash
+```shell
 # For ESP32
 pio run -e esp32dev
 pio run -e esp32dev -t upload
@@ -167,7 +170,7 @@ pio run -e d1_mini -t upload
 ```
 
 #### Serial Monitor
-```bash
+```shell
 pio device monitor -e <environment_name>
 ```
 
