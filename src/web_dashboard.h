@@ -3,8 +3,9 @@
 // HTML dashboard content for the OTA web interface
 // Separated from ota_server.cpp to keep the logic clean
 
-inline const char* getDashboardHTML() {
-  return R"html(
+inline const char *getDashboardHTML()
+{
+    return R"html(
 <!DOCTYPE html>
 <html>
 <head>

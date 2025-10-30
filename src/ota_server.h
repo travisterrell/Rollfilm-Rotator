@@ -23,10 +23,10 @@
 
   // WiFi Configuration
   #ifndef WIFI_SSID
-    #define WIFI_SSID         "wifi_ssid"      // Normally declared via platformio.ini build_flags
+    #define WIFI_SSID "wifi_ssid"      // Normally declared via platformio.ini build_flags
   #endif
   #ifndef WIFI_PASSWORD  
-    #define WIFI_PASSWORD     "wifi_password"  // Normally declared via platformio.ini build_flags
+    #define WIFI_PASSWORD "wifi_password"  // Normally declared via platformio.ini build_flags
   #endif
 #define OTA_PORT            80    // Web server port for OTA updates
   #define WIFI_TIMEOUT_MS   10000 // WiFi connection timeout
