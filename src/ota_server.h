@@ -17,12 +17,12 @@
 
   // WiFi Configuration
   #ifndef WIFI_SSID
-    #define WIFI_SSID         "your_wifi_ssid"      // Change this to your WiFi network name
+    #define WIFI_SSID         "wifi_ssid"      // Normally declared via platformio.ini build_flags
   #endif
   #ifndef WIFI_PASSWORD  
-    #define WIFI_PASSWORD     "your_wifi_password"  // Change this to your WiFi password
+    #define WIFI_PASSWORD     "wifi_password"  // Normally declared via platformio.ini build_flags
   #endif
-  #define OTA_PORT          80    // Web server port for OTA updates
+#define OTA_PORT            80    // Web server port for OTA updates
   #define WIFI_TIMEOUT_MS   10000 // WiFi connection timeout
 
   // Global objects for OTA functionality

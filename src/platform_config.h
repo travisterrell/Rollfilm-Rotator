@@ -42,7 +42,8 @@ inline ProcessorConfig getPlatformConfig() {
   // Common configuration for all platforms
   cfg.chIn1   = 0;  
   cfg.chIn2   = 1;
-  cfg.cruisePct = 72.3f; // nominal duty % (roughly equates to RPM on a 100 RPM gearmotor)
+
+  cfg.cruisePct = 72.3f; // nominal duty % (roughly equates to RPM on a 100 RPM gearmotor, but varies by load & voltage)
 
   // Timing configuration
   cfg.t.rampUpMs       = 15;
@@ -60,24 +61,3 @@ inline ProcessorConfig getPlatformConfig() {
 #else
   #define HAS_OTA_SUPPORT 0
 #endif
-
-constexpr bool hasOTASupport() {
-#if defined(CONFIG_IDF_TARGET_ESP32C6)
-  return true;
-#else
-  return false;
-#endif
-}
-
-// Platform identification for logging
-inline const char* getPlatformName() {
-#if defined(CONFIG_IDF_TARGET_ESP32C6)
-  return "ESP32-C6";
-#elif defined(ESP32)
-  return "ESP32";
-#elif defined(ESP8266)
-  return "ESP8266";
-#else
-  return "Unknown";
-#endif
-}
