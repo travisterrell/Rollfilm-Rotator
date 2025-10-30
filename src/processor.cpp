@@ -76,15 +76,16 @@ namespace
     for (uint16_t i = 0; i <= steps; ++i)
     {
       uint16_t d = (uint32_t)targetDuty * i / steps;
-#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
-      ledcWrite(G.pins.in2, 0); // coast other leg
-      ledcWrite(G.pins.in1, d); // forward drive on IN1
-      if (i == steps) LOGFLN("RampForward final: IN1(pin %d)=%d, IN2(pin %d)=0", G.pins.in1, d, G.pins.in2);
-#elif defined(ESP8266)
-      analogWrite(G.pins.in2, 0); // coast other leg
-      analogWrite(G.pins.in1, d); // forward drive on IN1
-#endif
-      delay(10);
+      #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+            ledcWrite(G.pins.in2, 0); // coast other leg
+            ledcWrite(G.pins.in1, d); // forward drive on IN1
+            if (i == steps)
+              LOGFLN("RampForward final: IN1(pin %d)=%d, IN2(pin %d)=0", G.pins.in1, d, G.pins.in2);
+      #elif defined(ESP8266)
+            analogWrite(G.pins.in2, 0); // coast other leg
+            analogWrite(G.pins.in1, d); // forward drive on IN1
+      #endif
+            delay(10);
     }
   }
   void RampReverse(uint16_t targetDuty, uint16_t rampTime)
@@ -96,14 +97,15 @@ namespace
     for (uint16_t i = 0; i <= steps; ++i)
     {
       uint16_t d = (uint32_t)targetDuty * i / steps;
-#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
-      ledcWrite(G.pins.in1, 0);
-      ledcWrite(G.pins.in2, d); // reverse drive on IN2
-      if (i == steps) LOGFLN("RampReverse final: IN1(pin %d)=0, IN2(pin %d)=%d", G.pins.in1, G.pins.in2, d);
-#elif defined(ESP8266)
-      analogWrite(G.pins.in1, 0);
-      analogWrite(G.pins.in2, d); // reverse drive on IN2
-#endif
+      #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+            ledcWrite(G.pins.in1, 0);
+            ledcWrite(G.pins.in2, d); // reverse drive on IN2
+            if (i == steps)
+              LOGFLN("RampReverse final: IN1(pin %d)=0, IN2(pin %d)=%d", G.pins.in1, G.pins.in2, d);
+      #elif defined(ESP8266)
+            analogWrite(G.pins.in1, 0);
+            analogWrite(G.pins.in2, d); // reverse drive on IN2
+      #endif
       delay(10);
     }
   }
@@ -114,14 +116,14 @@ static const char *phaseName(Phase p)
 {
   switch (p)
   {
-  case Phase::IDLE:
-    return "IDLE";
-  case Phase::RUN_FWD:
-    return "RUN_FWD";
-  case Phase::RUN_REV:
-    return "RUN_REV";
-  default:
-    return "?";
+    case Phase::IDLE:
+      return "IDLE";
+    case Phase::RUN_FWD:
+      return "RUN_FWD";
+    case Phase::RUN_REV:
+      return "RUN_REV";
+    default:
+      return "?";
   }
 }
 
@@ -131,18 +133,18 @@ void InitializeProcessor(const ProcessorConfig &cfg)
   G = cfg; // copy-by-value
 
   // PWM setup - auto-detect platform
-#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
-  // ESP32 and ESP32-C6 both use v3 LEDC API
-  ledcAttach(G.pins.in1, G.pwmHz, G.pwmBits);
-  ledcAttach(G.pins.in2, G.pwmHz, G.pwmBits);
-  LOGFLN("PWM setup: IN1=GPIO%d, IN2=GPIO%d, freq=%dHz, bits=%d", G.pins.in1, G.pins.in2, G.pwmHz, G.pwmBits);
-#elif defined(ESP8266)
-  // ESP8266 uses analogWrite with analogWriteFreq
-  analogWriteFreq(G.pwmHz);
-  analogWriteRange(PwmMax()); // Set PWM range to match pwmBits
-  pinMode(G.pins.in1, OUTPUT);
-  pinMode(G.pins.in2, OUTPUT);
-#endif
+  #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+    // ESP32 and ESP32-C6 both use v3 LEDC API
+    ledcAttach(G.pins.in1, G.pwmHz, G.pwmBits);
+    ledcAttach(G.pins.in2, G.pwmHz, G.pwmBits);
+    LOGFLN("PWM setup: IN1=GPIO%d, IN2=GPIO%d, freq=%dHz, bits=%d", G.pins.in1, G.pins.in2, G.pwmHz, G.pwmBits);
+  #elif defined(ESP8266)
+    // ESP8266 uses analogWrite with analogWriteFreq
+    analogWriteFreq(G.pwmHz);
+    analogWriteRange(PwmMax()); // Set PWM range to match pwmBits
+    pinMode(G.pins.in1, OUTPUT);
+    pinMode(G.pins.in2, OUTPUT);
+  #endif
 
   // Buttons
   pinMode(G.pins.btnStart, INPUT_PULLUP);
@@ -150,14 +152,14 @@ void InitializeProcessor(const ProcessorConfig &cfg)
   Bstart.pin = G.pins.btnStart;
 
   // Idle (coast)
-#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
-  // ESP32 and ESP32-C6 both use pin-based ledcWrite with v3 API
-  ledcWrite(G.pins.in1, 0);
-  ledcWrite(G.pins.in2, 0);
-#elif defined(ESP8266)
-  analogWrite(G.pins.in1, 0);
-  analogWrite(G.pins.in2, 0);
-#endif
+  #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+    // ESP32 and ESP32-C6 both use pin-based ledcWrite with v3 API
+    ledcWrite(G.pins.in1, 0);
+    ledcWrite(G.pins.in2, 0);
+  #elif defined(ESP8266)
+    analogWrite(G.pins.in1, 0);
+    analogWrite(G.pins.in2, 0);
+  #endif
 
   LOGFLN("Processor init: PWM=%dkHz bits=%d, cruise=%.1f%%",
          G.pwmHz / 1000, G.pwmBits, G.cruisePct);
@@ -168,49 +170,138 @@ void InitializeProcessor(const ProcessorConfig &cfg)
 //--------------------------------
 void RunForwardDuty(uint16_t duty)
 {
-#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
-  ledcWrite(G.pins.in2, 0); // coast leg
-  ledcWrite(G.pins.in1, duty);
-  LOGFLN("RunForwardDuty: IN1(pin %d)=%d, IN2(pin %d)=0", G.pins.in1, duty, G.pins.in2);
-#elif defined(ESP8266)
-  analogWrite(G.pins.in2, 0); // coast leg
-  analogWrite(G.pins.in1, duty);
-#endif
+  #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+    ledcWrite(G.pins.in2, 0); // coast leg
+    ledcWrite(G.pins.in1, duty);
+    LOGFLN("RunForwardDuty: IN1(pin %d)=%d, IN2(pin %d)=0", G.pins.in1, duty, G.pins.in2);
+  #elif defined(ESP8266)
+    analogWrite(G.pins.in2, 0); // coast leg
+    analogWrite(G.pins.in1, duty);
+  #endif
 }
 
 void RunReverseDuty(uint16_t duty)
 {
-#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
-  ledcWrite(G.pins.in1, 0);
-  ledcWrite(G.pins.in2, duty);
-  LOGFLN("RunReverseDuty: IN1(pin %d)=0, IN2(pin %d)=%d", G.pins.in1, G.pins.in2, duty);
-#elif defined(ESP8266)
-  analogWrite(G.pins.in1, 0);
-  analogWrite(G.pins.in2, duty);
-#endif
+  #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+    ledcWrite(G.pins.in1, 0);
+    ledcWrite(G.pins.in2, duty);
+    LOGFLN("RunReverseDuty: IN1(pin %d)=0, IN2(pin %d)=%d", G.pins.in1, G.pins.in2, duty);
+  #elif defined(ESP8266)
+    analogWrite(G.pins.in1, 0);
+    analogWrite(G.pins.in2, duty);
+  #endif
 }
 
 void CoastStop()
 {
-#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
-  ledcWrite(G.pins.in1, 0);
-  ledcWrite(G.pins.in2, 0);
-#elif defined(ESP8266)
-  analogWrite(G.pins.in1, 0);
-  analogWrite(G.pins.in2, 0);
-#endif
+  #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+    ledcWrite(G.pins.in1, 0);
+    ledcWrite(G.pins.in2, 0);
+  #elif defined(ESP8266)
+    analogWrite(G.pins.in1, 0);
+    analogWrite(G.pins.in2, 0);
+  #endif
 }
 
 void BrakeStop()
 {
   uint32_t maxd = PwmMax();
-#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
-  ledcWrite(G.pins.in1, maxd);
-  ledcWrite(G.pins.in2, maxd);
-#elif defined(ESP8266)
-  analogWrite(G.pins.in1, maxd);
-  analogWrite(G.pins.in2, maxd);
-#endif
+  #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+    ledcWrite(G.pins.in1, maxd);
+    ledcWrite(G.pins.in2, maxd);
+  #elif defined(ESP8266)
+    analogWrite(G.pins.in1, maxd);
+    analogWrite(G.pins.in2, maxd);
+  #endif
+}
+
+//--------------------------------
+// Shared command helpers (CLI & OTA)
+//--------------------------------
+
+void ProcessorCommandManualForward()
+{
+  uint16_t d = PercentageToDutyCycle(G.cruisePct);
+  LOGFLN("Manual FWD %.1f%%", G.cruisePct);
+  RampForward(d, G.t.rampUpMs);
+}
+
+void ProcessorCommandManualReverse()
+{
+  uint16_t d = PercentageToDutyCycle(G.cruisePct);
+  LOGFLN("Manual REV %.1f%%", G.cruisePct);
+  RampReverse(d, G.t.rampUpMs);
+}
+
+void ProcessorCommandCoastStop()
+{
+  LOGFLN("Coast stop");
+  StopCycleCoast();
+}
+
+void ProcessorCommandBrakeStop()
+{
+  LOGFLN("Brake stop");
+  StopCycleBrake();
+}
+
+void ProcessorCommandAutoStart()
+{
+  LOGFLN("Auto pattern start (indef)");
+  StartContinuousCycle();
+}
+
+void ProcessorCommandSetCruise(float pct)
+{
+  if (pct < 0.0f)
+    pct = 0.0f;
+  if (pct > 100.0f)
+    pct = 100.0f;
+  G.cruisePct = pct;
+  LOGFLN("Cruise set to %.1f%%", G.cruisePct);
+}
+
+void ProcessorCommandPrintState()
+{
+  LOGFLN("State: running=%d phase=%s duty=%.1f%%", (int)running, phaseName(phase), G.cruisePct);
+}
+
+void ProcessorCommandTestIn1()
+{
+  LOGFLN("Test GPIO%d only at 50%%", G.pins.in1);
+  uint16_t halfDuty = PercentageToDutyCycle(50.0f);
+  #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+    ledcWrite(G.pins.in1, halfDuty);
+    ledcWrite(G.pins.in2, 0);
+  #elif defined(ESP8266)
+    analogWrite(G.pins.in1, halfDuty);
+    analogWrite(G.pins.in2, 0);
+  #endif
+}
+
+void ProcessorCommandTestIn2()
+{
+  LOGFLN("Test GPIO%d only at 50%%", G.pins.in2);
+  uint16_t halfDuty = PercentageToDutyCycle(50.0f);
+  #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+    ledcWrite(G.pins.in1, 0);
+    ledcWrite(G.pins.in2, halfDuty);
+  #elif defined(ESP8266)
+    analogWrite(G.pins.in1, 0);
+    analogWrite(G.pins.in2, halfDuty);
+  #endif
+}
+
+void ProcessorCommandAllOff()
+{
+  LOGFLN("Turn off both motor pins");
+  #if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
+    ledcWrite(G.pins.in1, 0);
+    ledcWrite(G.pins.in2, 0);
+  #elif defined(ESP8266)
+    analogWrite(G.pins.in1, 0);
+    analogWrite(G.pins.in2, 0);
+  #endif
 }
 
 //--------------------------------
@@ -254,7 +345,7 @@ void ServiceProcessor()
     LOGFLN("Button pressed (toggle)");
     if (!running)
     {
-    StartContinuousCycle();
+      StartContinuousCycle();
     }
     else
     {
@@ -262,9 +353,8 @@ void ServiceProcessor()
     }
   }
 
-
   //-----------------------------------------------------------------
-  // Phase Machine (non-blocking except short ramps at transitions)  
+  // Phase Machine (non-blocking except short ramps at transitions)
   //-----------------------------------------------------------------
   if (!running)
     return;
@@ -274,38 +364,37 @@ void ServiceProcessor()
 
   switch (phase)
   {
-  case Phase::RUN_FWD:
-    dirForward = true;
-    if (now - phaseStartMs >= G.t.forwardRunMs)
-    {
-      RampForward(0, G.t.rampDownMs);
-      CoastStop();
-      delay(G.t.coastBetweenMs);
-      RampReverse(cruise, G.t.rampUpMs);
-      phase = Phase::RUN_REV;
-      phaseStartMs = millis();
-    }
-    break;
+    case Phase::RUN_FWD:
+      dirForward = true;
+      if (now - phaseStartMs >= G.t.forwardRunMs)
+      {
+        RampForward(0, G.t.rampDownMs);
+        CoastStop();
+        delay(G.t.coastBetweenMs);
+        RampReverse(cruise, G.t.rampUpMs);
+        phase = Phase::RUN_REV;
+        phaseStartMs = millis();
+      }
+      break;
 
-  case Phase::RUN_REV:
-    dirForward = false;
-    if (now - phaseStartMs >= G.t.reverseRunMs)
-    {
-      RampReverse(0, G.t.rampDownMs);
-      CoastStop();
-      delay(G.t.coastBetweenMs);
-      RampForward(cruise, G.t.rampUpMs);
-      phase = Phase::RUN_FWD;
-      phaseStartMs = millis();
-    }
-    break;
+    case Phase::RUN_REV:
+      dirForward = false;
+      if (now - phaseStartMs >= G.t.reverseRunMs)
+      {
+        RampReverse(0, G.t.rampDownMs);
+        CoastStop();
+        delay(G.t.coastBetweenMs);
+        RampForward(cruise, G.t.rampUpMs);
+        phase = Phase::RUN_FWD;
+        phaseStartMs = millis();
+      }
+      break;
 
-  case Phase::IDLE:
-  default:
-    break;
+    case Phase::IDLE:
+    default:
+      break;
   }
 }
-
 
 void HandleSerialCLI()
 {
@@ -315,30 +404,23 @@ void HandleSerialCLI()
 
   if (cmd == 'f')
   {
-    uint16_t d = PercentageToDutyCycle(G.cruisePct);
-    LOGFLN("Manual FWD %.1f%%", G.cruisePct);
-    RampForward(d, G.t.rampUpMs);
+    ProcessorCommandManualForward();
   }
   else if (cmd == 'r')
   {
-    uint16_t d = PercentageToDutyCycle(G.cruisePct);
-    LOGFLN("Manual REV %.1f%%", G.cruisePct);
-    RampReverse(d, G.t.rampUpMs);
+    ProcessorCommandManualReverse();
   }
   else if (cmd == 'c')
   {
-    LOGFLN("Coast stop");
-    StopCycleCoast();
+    ProcessorCommandCoastStop();
   }
   else if (cmd == 'b')
   {
-    LOGFLN("Brake stop");
-    StopCycleBrake();
+    ProcessorCommandBrakeStop();
   }
   else if (cmd == 'a')
   {
-    LOGFLN("Auto pattern start (indef)");
-    StartContinuousCycle();
+    ProcessorCommandAutoStart();
   }
   else if (cmd == 'u')
   {
@@ -347,53 +429,51 @@ void HandleSerialCLI()
     }
 
     float pct = Serial.parseFloat();
-    G.cruisePct = pct;
-    LOGFLN("Cruise set to %.1f%%", G.cruisePct);
+    ProcessorCommandSetCruise(pct);
   }
   else if (cmd == 'p')
   {
-    LOGFLN("State: running=%d phase=%s duty=%.1f%%", (int)running, phaseName(phase), G.cruisePct);
+    ProcessorCommandPrintState();
   }
   else if (cmd == '1')
   {
-    // Test GPIO2 (IN1) only
-    LOGFLN("Test GPIO2 only at 50%%");
-    uint16_t halfDuty = PercentageToDutyCycle(50.0f);
-#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
-    ledcWrite(G.pins.in1, halfDuty);
-    ledcWrite(G.pins.in2, 0);
-#elif defined(ESP8266)
-    analogWrite(G.pins.in1, halfDuty);
-    analogWrite(G.pins.in2, 0);
-#endif
+    ProcessorCommandTestIn1();
   }
   else if (cmd == '2')
   {
-    // Test GPIO3 (IN2) only
-    LOGFLN("Test GPIO3 only at 50%%");
-    uint16_t halfDuty = PercentageToDutyCycle(50.0f);
-#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
-    ledcWrite(G.pins.in1, 0);
-    ledcWrite(G.pins.in2, halfDuty);
-#elif defined(ESP8266)
-    analogWrite(G.pins.in1, 0);
-    analogWrite(G.pins.in2, halfDuty);
-#endif
+    ProcessorCommandTestIn2();
   }
   else if (cmd == '0')
   {
-    // Turn off both
-    LOGFLN("Turn off both pins");
-#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(ESP32)
-    ledcWrite(G.pins.in1, 0);
-    ledcWrite(G.pins.in2, 0);
-#elif defined(ESP8266)
-    analogWrite(G.pins.in1, 0);
-    analogWrite(G.pins.in2, 0);
-#endif
+    ProcessorCommandAllOff();
   }
   else
   {
     LOGFLN("Commands: f=FWD, r=REV, c=COAST, b=BRAKE, a=AUTO, u[%%], p=print, 1=test GPIO2, 2=test GPIO3, 0=off");
   }
+}
+
+// Serial setup and configuration
+void setupSerial(bool waitForSerial, uint32_t baudRate, uint32_t waitTimeMs)
+{
+  Serial.begin(baudRate);
+  if (waitForSerial && waitTimeMs > 0)
+  {
+    unsigned long t0 = millis();
+    while (!Serial && (millis() - t0) < waitTimeMs)
+    {
+      // Optional wait for serial connection
+    }
+  }
+  LOGFLN("Serial initialized at %u baud on platform: %s", baudRate,
+          #if defined(CONFIG_IDF_TARGET_ESP32C6)
+                  "ESP32-C6"
+          #elif defined(ESP32)
+                  "ESP32"
+          #elif defined(ESP8266)
+                  "ESP8266"
+          #else
+                  "Unknown"
+          #endif
+      );
 }

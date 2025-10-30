@@ -1,12 +1,15 @@
 #pragma once
 #include <Arduino.h>
 
+// Optional web dashboard log mirroring (implemented in ota_server.cpp when ENABLE_OTA=1)
+void OtaLogLinef(const char *fmt, ...);
+
 // If LOGF/LOGFLN defined elsewhere, these won't override them.
 #ifndef LOGF
   #define LOGF(...)   do { Serial.printf(__VA_ARGS__); } while(0)
 #endif
 #ifndef LOGFLN
-  #define LOGFLN(...) do { Serial.printf(__VA_ARGS__); Serial.println(); } while(0)
+  #define LOGFLN(...) do { Serial.printf(__VA_ARGS__); Serial.println(); OtaLogLinef(__VA_ARGS__); } while(0)
 #endif
 
 struct ProcessorPins {
@@ -52,3 +55,18 @@ void StopCycleBrake();        // brake, sets running=false & phase=IDLE
 // Service functions (call from loop)
 void ServiceProcessor();      // buttons, timed stop, phase machine
 void HandleSerialCLI();       // optional USB CLI (noop if no data)
+
+// Serial setup and configuration
+void setupSerial(bool waitForSerial = true, uint32_t baudRate = 115200, uint32_t waitTimeMs = 1500);
+
+// Shared command helpers (used by serial CLI and OTA dashboard)
+void ProcessorCommandManualForward();
+void ProcessorCommandManualReverse();
+void ProcessorCommandCoastStop();
+void ProcessorCommandBrakeStop();
+void ProcessorCommandAutoStart();
+void ProcessorCommandSetCruise(float pct);
+void ProcessorCommandPrintState();
+void ProcessorCommandTestIn1();
+void ProcessorCommandTestIn2();
+void ProcessorCommandAllOff();
